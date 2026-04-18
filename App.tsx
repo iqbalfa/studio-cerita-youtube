@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AppState, DEFAULT_SYSTEM_PROMPT, ReferenceImage, StoryScene, LLMProvider, ILMU_LIDI_STYLE, ILMU_SURVIVAL_STYLE, ILMU_NYANTUY_STYLE } from './types';
+import { AppState, DEFAULT_SYSTEM_PROMPT, ReferenceImage, StoryScene, LLMProvider, ILMU_LIDI_STYLE, ILMU_SURVIVAL_STYLE, ILMU_NYANTUY_STYLE, ILMU_PSIKOLOGI_STYLE } from './types';
 import { Layout, TabId } from './components/Layout';
 import FileUpload from './components/FileUpload';
 import StoryTable from './components/StoryTable';
@@ -274,7 +274,8 @@ const TTS_PRESETS: Record<string, string> = {
   'Ilmu Lidi': "Gunakan persona Teman Cerita yang KASUAL, BERSAHABAT, dan sedikit NYELENEH. Gunakan PITCH SEDANG, tempo NORMAL yang mengalir wajar. Suara harus NATURAL DAN BERCELOTEH, seolah sedang nongkrong sambil ngopi. Beri JEDA MANUSIAWI sebelum fakta penting. Gunakan ayunan intonasi pada akhir kalimat tanya. Sampaikan materi dengan gaya akrab 'eh dengerin deh'.",
   'Ilmu Survival': "Gunakan persona Survivor yang TANGGUH, WASPADA, namun tetap TENANG. Gunakan PITCH SEDANG-RENDAH, tempo SEDIKIT LEBIH LAMBAT dan TEGAS. Suara harus terdengar SERIUS, BERWIBAWA, dan PENGALAMAN. Beri JEDA MANUSIAWI yang cukup panjang sebelum poin krusial untuk menciptakan ketegangan. Gunakan intonasi yang datar namun penuh penekanan pada kata-kata kunci keselamatan. Sampaikan materi dengan gaya 'dengerin, ini masalah hidup dan mati'.",
   'Ilmu Nyantuy': "Gunakan persona Teman Cerita yang KASUAL dan BERSAHABAT. PENTING: Ikuti aturan teknis berikut secara ketat: 1. Gunakan PITCH SEDANG, hindari nada melengking, hindari nada terlalu berat. 2. Gunakan TEMPO NORMAL yang mengalir wajar. Bicaralah dengan ritme orang yang sedang nongkrong dan bercerita. Jangan terburu-buru, jangan melambat. 3. Suara harus NATURAL DAN BERCELOTEH (Conversational). Tunjukkan pembawaan rileks seolah sedang menjelaskan sesuatu yang menarik sambil menikmati segelas kopi. Jangan kaku membacakan teks lurus bak penyiar berita. 4. Terapkan JEDA MANUSIAWI. Beri jeda sepersekian detik sebelum membeberkan fakta penting, seolah sedang berpikir memilah kata. Gunakan ayunan intonasi pada akhir kalimat tanya untuk memancing rasa penasaran. 5. Sampaikan materi psikologi dengan gaya akrab 'eh dengerin deh'. Biarkan penyampaian terasa sedikit spontan supaya pendengar merasa sedang berinteraksi dengan manusia sungguhan:",
-  'Norman': "Gunakan persona yang formal, informatif, dan sedikit kaku seperti penyiar berita. Gunakan pitch yang stabil, tempo yang teratur, dan intonasi yang datar. Hindari gaya berceloteh atau jeda yang terlalu lama. Sampaikan materi secara langsung dan objektif."
+  'Norman': "Gunakan persona yang formal, informatif, dan sedikit kaku seperti penyiar berita. Gunakan pitch yang stabil, tempo yang teratur, dan intonasi yang datar. Hindari gaya berceloteh atau jeda yang terlalu lama. Sampaikan materi secara langsung dan objektif.",
+  'Ilmu Psikologi': "Gunakan persona Psikolog yang RAMAH, MUDAH DIAJAK NGOBROL, dan PENUH EMPATI. Gunakan PITCH SEDANG-RENDAH, tempo SANTAI tapi TETAP JELAS. Suara harus terdengar seperti sedang menjelaskan konsep psikologi ke teman di kafe — hangat, relatable, tanpa kesan menggurui. Beri JEDA MANUSIAWI sebelum istilah teknis, lalu jelaskan dengan bahasa sehari-hari. Gunakan intonasi yang naik sedikit saat memberi insight mengejutkan. Sampaikan dengan gaya 'nah, ini yang jarang orang sadari'."
 };
 
 const App: React.FC = () => {
@@ -1249,6 +1250,17 @@ const App: React.FC = () => {
             easterEggTypes: ['pop culture', 'khas indonesia'],
             ttsVoice: 'Iapetus',
             ttsPreset: 'Ilmu Nyantuy'
+          }));
+        } else if (val === 'ILMU PSIKOLOGI') {
+          setState(p => ({
+            ...p,
+            narratorName: 'Ilmu Psikologi',
+            stylePreset: 'ILMU PSIKOLOGI',
+            styleSuffix: ILMU_PSIKOLOGI_STYLE,
+            easterEggCount: 1,
+            easterEggTypes: ['pop culture'],
+            ttsVoice: 'Iapetus',
+            ttsPreset: 'Ilmu Psikologi'
           }));
         } else {
           setState(p => ({ ...p, stylePreset: 'Custom' }));

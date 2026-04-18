@@ -129,6 +129,7 @@ const PRESETS = [
   { value: 'Ilmu Lidi', label: 'Ilmu Lidi' },
   { value: 'ILMU SURVIVAL', label: 'Ilmu Survival' },
   { value: 'ILMU NYANTUY', label: 'Ilmu Nyantuy' },
+  { value: 'ILMU PSIKOLOGI', label: 'Ilmu Psikologi' },
   { value: 'Custom', label: 'Custom' },
 ];
 

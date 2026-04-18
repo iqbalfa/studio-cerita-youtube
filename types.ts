@@ -50,7 +50,7 @@ export interface AppState {
   analysisError?: string;
   narratorName: string;
   narratorSuffix: string;
-  stylePreset: 'Ilmu Lidi' | 'ILMU SURVIVAL' | 'ILMU NYANTUY' | 'Custom';
+  stylePreset: 'Ilmu Lidi' | 'ILMU SURVIVAL' | 'ILMU NYANTUY' | 'ILMU PSIKOLOGI' | 'Custom';
   styleSuffix: string;
   easterEggCount: number;
   easterEggTypes: string[];
@@ -62,7 +62,7 @@ export interface AppState {
   voiceDirectorVersion: string; // New: output for voice director transformation
   ttsVoice: string;
   ttsCopies: number;
-  ttsPreset: 'Ilmu Lidi' | 'Ilmu Survival' | 'Norman' | 'Ilmu Nyantuy' | 'Custom';
+  ttsPreset: 'Ilmu Lidi' | 'Ilmu Survival' | 'Norman' | 'Ilmu Nyantuy' | 'Ilmu Psikologi' | 'Custom';
   ttsCustomInstruction: string;
 }
 
@@ -71,6 +71,8 @@ export const ILMU_LIDI_STYLE = "Modern 2D webcomic style, white background, bold
 export const ILMU_SURVIVAL_STYLE = "Gritty brush-and-ink noir illustration, raw and expressive textured brushstrokes, heavy shadow pooling, stark white minimal background, decaying post-apocalyptic textures, selective crimson red coloring, high contrast, sharp focus, 8k resolution, high quality digital art.";
 
 export const ILMU_NYANTUY_STYLE = "Ultra-minimalist 2D cartoon style, crude MS Paint aesthetic, basic flat colors, unpolished rough outlines, intentionally simple drawing, humorous deadpan tone, solid white background, low-effort high-comedy internet meme vibe, lo-fi digital art.";
+
+export const ILMU_PSIKOLOGI_STYLE = "2D fast digital scribble, whiteboard doodle style, dry-erase marker texture, thick messy lines, casual character illustration, pure white background, minimal flat colors, spontaneous energetic drawing, humorous explanation, No text if not mentioned.";
 
 export const DEFAULT_SYSTEM_PROMPT = `Peran Utama: Anda adalah Asisten AI Kreatif, Creative Director, dan Storyboard Artist Profesional untuk kanal YouTube "{{NARRATOR_NAME}}".
 
