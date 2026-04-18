@@ -805,6 +805,18 @@ const App: React.FC = () => {
               state.geminiApiKey
           );
 
+          // Post-process: ensure every prompt has style suffix + easter egg
+          const validatedPrompts = prompts.map((p, i) => {
+              let fixed = p.trim();
+              if (!fixed.toLowerCase().includes("easter_egg")) {
+                  fixed += " easter_egg:心头一震 emoji";
+              }
+              if (!fixed.includes("white background")) {
+                  fixed += " " + state.styleSuffix;
+              }
+              return fixed;
+          });
+
           setState(prev => ({
               ...prev,
               scenes: prev.scenes.map(s => s.id === sceneId ? { 
@@ -812,7 +824,7 @@ const App: React.FC = () => {
                   isGeneratingPrompts: false,
                   frames: s.frames.map((f, i) => ({
                       ...f,
-                      visualPrompt: prompts[i] || f.visualPrompt // Fallback
+                      visualPrompt: validatedPrompts[i] || f.visualPrompt // Fallback
                   }))
               } : s)
           }));

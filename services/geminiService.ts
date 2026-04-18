@@ -642,9 +642,9 @@ export const generatePromptsFromFrames = async (
              * Prompt 1 must match SplitText 1. Prompt 2 must match SplitText 2.
            
            [EXAMPLE SEQUENCE CORRECT OUTPUT]:
-           - Prompt 0: 'Di dalam kelas. Sapi makan rumput di ladang.'
-           - Prompt 1: 'Referensi dari Gambar sebelumnya, tapi kini sapi sedang berlari kencang.'
-           - Prompt 2: 'Referensi dari Gambar sebelumnya, tapi kini sapi berlari bersama kuda.'
+           - Prompt 0: 'Ilmu Lidi mengangkat alis dengan tatapan curiga. easter_egg:心头一震 emoji. Modern 2D webcomic style, white background, bold clean line art'
+           - Prompt 1: 'Referensi dari Gambar sebelumnya, tapi kini Ilmu Lidi mengangguk pelan. easter_egg: chess piece. Modern 2D webcomic style, white background, bold clean line art'
+           - Prompt 2: 'Referensi dari Gambar sebelumnya, tapi kini Ilmu Lidi melambaikan tangan. easter_egg:心头一震 emoji. Modern 2D webcomic style, white background, bold clean line art'
            
         5. TEXT OVERLAY RULE (V2.8 UPDATE):
            - IF the text contains words in ALL CAPS (e.g. "GAK SADAR DIRI"), you MUST include an instruction: "Teks besar '[WORD]' muncul di gambar dengan font tebal komik."
