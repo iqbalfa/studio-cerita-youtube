@@ -326,8 +326,7 @@ const App: React.FC = () => {
     ttsPreset: 'Ilmu Lidi',
     ttsSpeakerProfile: TTS_PRESETS['Ilmu Lidi'].speakerProfile,
     ttsScene: TTS_PRESETS['Ilmu Lidi'].scene,
-    ttsDirectorNotes: TTS_PRESETS['Ilmu Lidi'].directorNotes,
-    ttsInlineTags: ''
+    ttsDirectorNotes: TTS_PRESETS['Ilmu Lidi'].directorNotes
   });
 
   const [isTransformingVoice, setIsTransformingVoice] = useState(false);
@@ -400,9 +399,7 @@ const App: React.FC = () => {
         const scene = state.ttsPreset === 'Custom' ? state.ttsScene : preset.scene;
         const directorNotes = state.ttsPreset === 'Custom' ? state.ttsDirectorNotes : preset.directorNotes;
 
-        const textToSpeak = state.ttsInlineTags.trim()
-            ? `${state.ttsInlineTags.trim()}\n\n${state.voiceDirectorVersion}`
-            : state.voiceDirectorVersion;
+        const textToSpeak = state.voiceDirectorVersion;
 
         const result = await generateTTS(
             textToSpeak,
@@ -1582,8 +1579,7 @@ const App: React.FC = () => {
                                                     ttsPreset: e.target.value as any,
                                                     ttsSpeakerProfile: preset.speakerProfile,
                                                     ttsScene: preset.scene,
-                                                    ttsDirectorNotes: preset.directorNotes,
-                                                    ttsInlineTags: ''
+                                                    ttsDirectorNotes: preset.directorNotes
                                                 }));
                                             } else {
                                                 setState(p => ({ ...p, ttsPreset: 'Custom' }));
@@ -1663,63 +1659,7 @@ const App: React.FC = () => {
                                 />
                             </div>
 
-                            {/* Inline Audio Tags */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest flex items-center gap-1">
-                                    <span>⚡</span> Inline Audio Tags (Optional)
-                                </label>
-                                <textarea
-                                    value={state.ttsInlineTags}
-                                    onChange={(e) => setState(prev => ({ ...prev, ttsInlineTags: e.target.value }))}
-                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[48px] resize-none transition-all font-mono"
-                                    placeholder="[excitedly] Dengarkan ini! [pause] Eits tapi... [sighs]"
-                                />
-                                <div className="flex flex-wrap gap-1.5">
-                                    {['[excitedly]', '[bored]', '[whispers]', '[laughs]', '[sarcastically]', '[panicked]', '[serious]', '[amazed]', '[sighs]', '[gasp]'].map(tag => (
-                                        <button
-                                            key={tag}
-                                            onClick={() => setState(prev => ({ ...prev, ttsInlineTags: prev.ttsInlineTags + ' ' + tag }))}
-                                            className="px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded text-[10px] text-purple-400 transition-colors cursor-pointer"
-                                        >
-                                            {tag}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
                             <div className="flex flex-wrap gap-3">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => {
-                                        if (!state.voiceDirectorVersion.trim()) return;
-                                        setIsGeneratingTTS(true);
-                                        const preset = TTS_PRESETS[state.ttsPreset];
-                                        const speakerProfile = state.ttsPreset === 'Custom' ? state.ttsSpeakerProfile : preset.speakerProfile;
-                                        const scene = state.ttsPreset === 'Custom' ? state.ttsScene : preset.scene;
-                                        const directorNotes = state.ttsPreset === 'Custom' ? state.ttsDirectorNotes : preset.directorNotes;
-                                        const textToSpeak = state.ttsInlineTags.trim()
-                                            ? `${state.ttsInlineTags.trim()}\n\n${state.voiceDirectorVersion}`
-                                            : state.voiceDirectorVersion;
-                                        generateTTS(textToSpeak, state.ttsVoice, speakerProfile, scene, directorNotes, state.geminiApiKey)
-                                            .then(result => {
-                                                const blob = createAudioBlob(result.data, result.mimeType);
-                                                setGeneratedAudioUrls([URL.createObjectURL(blob)]);
-                                            })
-                                            .catch(err => alert("Preview Error: " + err.message))
-                                            .finally(() => setIsGeneratingTTS(false));
-                                    }}
-                                    disabled={isGeneratingTTS || !state.voiceDirectorVersion.trim()}
-                                    className={`flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition-all border
-                                        ${isGeneratingTTS || !state.voiceDirectorVersion.trim()
-                                            ? 'bg-gray-100 text-muted border-border cursor-not-allowed'
-                                            : 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
-                                        }`}
-                                >
-                                    <Icons.monitor />
-                                    Preview
-                                </motion.button>
-
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}

@@ -66,7 +66,6 @@ export interface AppState {
   ttsSpeakerProfile: string;
   ttsScene: string;
   ttsDirectorNotes: string;
-  ttsInlineTags: string;
 }
 
 export const ILMU_LIDI_STYLE = "Modern 2D webcomic style, white background, bold clean line art, stylized character design, flat colors with cel-shading, cinematic dramatic lighting, volumetric atmosphere, rim lighting, deep shadows, ambient occlusion, depth of field, sharp focus on subject, 8k resolution, high quality digital illustration.";
