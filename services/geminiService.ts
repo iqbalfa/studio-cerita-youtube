@@ -235,7 +235,7 @@ export const analyzeNarrativeToScenes = async (
               items: {
                 type: Type.OBJECT,
                 properties: {
-                    visualPrompt: { type: Type.STRING, description: `Detailed prompt in ${language === 'en' ? 'ENGLISH' : 'INDONESIAN'} (International Context). Must start with '[INDOOR/OUTDOOR] - [Location Name]'. Must include 'easter_egg' as per instructions.` },
+                    visualPrompt: { type: Type.STRING, description: `Detailed prompt in ${language === 'en' ? 'ENGLISH' : 'INDONESIAN'} (International Context). Must include 'easter_egg' as per instructions.` },
                     format: { type: Type.STRING, description: "Format: 'Single Panel', 'Multi Panel (2)', 'Multi Panel (3)', or 'Sequence'. RULE: If 'splitText' array has more than 1 item, Format CANNOT be 'Single Panel'." },
                     splitText: { 
                         type: Type.ARRAY, 
@@ -328,10 +328,8 @@ export const analyzeNarrativeToScenes = async (
     CRITICAL - VISUAL PROMPT STRUCTURE:
     
     RULE 1: LOCATION (MANDATORY & INTERNATIONAL)
-    - IF NOT using "ilmu lidi" preset: Start EVERY prompt with: "[Indoor/Outdoor] - [Specific Location Description]".
-    - IF using "ilmu lidi" preset: Location description is flexible, no mandatory [Indoor/Outdoor] prefix required.
-    - Use Universal/International settings.
-    - Example: "[Indoor] - Inside a modern minimalist office." or "[Outdoor] - In a busy Times Square style street."
+    - Describe the setting in detail — use universal/international locations.
+    - Example: "Inside a modern minimalist office." or "In a busy Times Square style street."
     
     RULE 2: EASTER EGGS (MANDATORY)
     - You MUST include ${easterEggCount} specific easter egg(s) in the description.
@@ -358,7 +356,7 @@ export const analyzeNarrativeToScenes = async (
     CASE 3: SEQUENCE (V2.4 LOGIC)
     - You MUST plan the visual flow.
     - SEPARATOR: You MUST separate the visual description for EACH frame using the delimiter " ||| ".
-    - Example for 2 frames: "[Indoor] - [Location]... Visual Frame 1 description ||| [Indoor] - [Location]... Visual Frame 2 description starting with Referensi..."
+    - Example for 2 frames: "Visual Frame 1 description ||| Visual Frame 2 description starting with Referensi..."
 
     CASE 4: SINGLE PANEL (Standard)
     - Standard visual description. Include 'easter_egg'.
@@ -627,7 +625,7 @@ export const generatePromptsFromFrames = async (
              * Prompt 1 must match SplitText 1. Prompt 2 must match SplitText 2.
            
            [EXAMPLE SEQUENCE CORRECT OUTPUT]:
-           - Prompt 0: '[Indoor] - Di dalam kelas. Sapi makan rumput di ladang.'
+           - Prompt 0: 'Di dalam kelas. Sapi makan rumput di ladang.'
            - Prompt 1: 'Referensi dari Gambar sebelumnya, tapi kini sapi sedang berlari kencang.'
            - Prompt 2: 'Referensi dari Gambar sebelumnya, tapi kini sapi berlari bersama kuda.'
            
@@ -647,7 +645,7 @@ export const generatePromptsFromFrames = async (
            - DESCRIBE him as OBSERVING the scene (e.g. "${narratorName} watching the situation").
 
         8. LOCATION & EASTER EGG RULES (MANDATORY):
-           - Start EVERY prompt with: "[Indoor/Outdoor] - [Specific Location Description]".
+           - Describe the setting in detail — use universal/international locations.
            - Include ${easterEggCount} "easter_egg" item(s): ${easterEggTypes.join(", ")}.
         
         9. CHARACTER DESCRIPTION RESTRICTIONS (STRICT):
@@ -738,7 +736,7 @@ export const refineScenePrompt = async (
     - ALWAYS use the specific character Name from the provided Characters list.
     ${isCharacter ? "- DESCRIBE clothing, physical appearance, and accessories in detail." : "- DO NOT describe clothing or physical appearance of the character (handled by style rules)."}
     - DO NOT use the word "Ilustrasi".
-    - MAINTAIN the Location ([Indoor/Outdoor]) description if present.
+    - MAINTAIN the location description if present.
     - MAINTAIN "easter_egg" if present.
     - ${isCharacter ? 'MANDATORY: Include the phrase "Fullbody Shot".' : 'STRICTLY FORCE "Half-Body Shot" or wider. No close-ups of just hands/feet.'}
     ${isCharacter ? "- ENSURE the background is explicitly mentioned as 'pure white background'." : `- IF no character is present, ADD "${narratorName}" observing the scene.`}

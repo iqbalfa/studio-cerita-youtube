@@ -109,8 +109,8 @@ A. Gaya Visual (Tidak Bisa Ditawar)
 - Garis Luar: Garis luar bersih dan tegas (bold clean line art).
 
 B. INTEGRASI LOKASI & EASTER EGG (ATURAN BARU INTERNASIONAL)
-- LOKASI SPESIFIK: Setiap prompt WAJIB diawali dengan keterangan lokasi [INDOOR] atau [OUTDOOR] dan deskripsi tempatnya yang Universal/Internasional.
-  Contoh: "[INDOOR] - Di dalam modern coffee shop." atau "[OUTDOOR] - Di trotoar kota metropolitan yang sibuk."
+- LOKASI SPESIFIK: Setiap prompt menggambarkan lokasi yang Universal/Internasional.
+  Contoh: "Di dalam modern coffee shop." atau "Di trotoar kota metropolitan yang sibuk."
   
 - SINGLE EASTER EGG (INTERNATIONAL):
   - Setiap frame WAJIB memiliki 1 jenis Easter Egg: "easter_egg" (Pop Culture/International References).
