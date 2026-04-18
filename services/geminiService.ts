@@ -327,11 +327,7 @@ export const analyzeNarrativeToScenes = async (
 
     CRITICAL - VISUAL PROMPT STRUCTURE:
     
-    RULE 1: LOCATION (MANDATORY & INTERNATIONAL)
-    - Describe the setting in detail — use universal/international locations.
-    - Example: "Inside a modern minimalist office." or "In a busy Times Square style street."
-    
-    RULE 2: EASTER EGGS (MANDATORY)
+    RULE 1: EASTER EGGS (MANDATORY)
     - You MUST include ${easterEggCount} specific easter egg(s) in the description.
     - Types: ${easterEggTypes.join(", ")}.
     
@@ -344,10 +340,10 @@ export const analyzeNarrativeToScenes = async (
     - If Format is "Multi Panel", create ONE prompt describing a split screen.
     - STRICT FORMAT (MUST FOLLOW THIS EXACTLY):
       "Split Screen / Multi Panel.
-       Panel 1 (Kiri): [Action/Visual 1]. [Location].
+       Panel 1 (Kiri): [Action/Visual 1].
        easter_egg: [Pop Culture Item]
        
-       Panel 2 (Tengah/Kanan): [Action/Visual 2]. [Location].
+       Panel 2 (Tengah/Kanan): [Action/Visual 2].
        easter_egg: [Pop Culture Item]
        
        (IF 3 PANELS)
@@ -603,14 +599,14 @@ export const generatePromptsFromFrames = async (
            - The frame has a 'splitText' array with multiple items.
            - ACTION: Create ONE cohesive prompt that describes a Side-by-Side layout.
            - STRICT FORMAT:
-             "Split Screen / Side-by-Side.
-              Panel 1 (Kiri): [Action/Visual]. [Location].
-              easter_egg: [Pop Culture]
-              
-              Panel 2 (Tengah/Kanan): [Action/Visual]. [Location].
-              easter_egg: [Pop Culture]
-              
-              (IF 3 PANELS)
+            "Split Screen / Side-by-Side.
+             Panel 1 (Kiri): [Action/Visual].
+             easter_egg: [Pop Culture]
+             
+             Panel 2 (Tengah/Kanan): [Action/Visual].
+             easter_egg: [Pop Culture]
+             
+             (IF 3 PANELS)
               Panel 3 (Kanan): [Action/Visual]"
            - RULE: The panels must be arranged HORIZONTALLY (Left to Right). NEVER use Top/Bottom split.
            - RULE (CRITICAL): JANGAN gunakan garis hitam pemisah, border, atau frame antar panel. Gunakan transisi warna alami atau komposisi yang menyatu. Latar belakang harus full color.
@@ -642,10 +638,9 @@ export const generatePromptsFromFrames = async (
         7. CRITICAL - CHARACTER PRESENCE (FALLBACK OBSERVER RULE):
            - IF the narrative is abstract/metaphorical and NO specific character fits:
            - YOU MUST INCLUDE "${narratorName}" in the prompt.
-           - DESCRIBE him as OBSERVING the scene (e.g. "${narratorName} watching the situation").
+           - DESCRIBE the action/scene WITHOUT mentioning any location or background setting.
 
-        8. LOCATION & EASTER EGG RULES (MANDATORY):
-           - Describe the setting in detail — use universal/international locations.
+        8. EASTER EGG RULES (MANDATORY):
            - Include ${easterEggCount} "easter_egg" item(s): ${easterEggTypes.join(", ")}.
         
         9. CHARACTER DESCRIPTION RESTRICTIONS (STRICT):
@@ -736,7 +731,7 @@ export const refineScenePrompt = async (
     - ALWAYS use the specific character Name from the provided Characters list.
     ${isCharacter ? "- DESCRIBE clothing, physical appearance, and accessories in detail." : "- DO NOT describe clothing or physical appearance of the character (handled by style rules)."}
     - DO NOT use the word "Ilustrasi".
-    - MAINTAIN the location description if present.
+    - DO NOT include any location or background setting in the visual description.
     - MAINTAIN "easter_egg" if present.
     - ${isCharacter ? 'MANDATORY: Include the phrase "Fullbody Shot".' : 'STRICTLY FORCE "Half-Body Shot" or wider. No close-ups of just hands/feet.'}
     ${isCharacter ? "- ENSURE the background is explicitly mentioned as 'pure white background'." : `- IF no character is present, ADD "${narratorName}" observing the scene.`}
