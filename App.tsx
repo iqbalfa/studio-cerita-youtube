@@ -811,7 +811,8 @@ const App: React.FC = () => {
               if (!fixed.toLowerCase().includes("easter_egg")) {
                   fixed += " easter_egg:心头一震 emoji";
               }
-              if (!fixed.includes("white background")) {
+              // Check if prompt ENDS with styleSuffix (not just contains "white background")
+              if (!fixed.endsWith(state.styleSuffix.trim())) {
                   fixed += " " + state.styleSuffix;
               }
               return fixed;
