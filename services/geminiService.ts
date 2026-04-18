@@ -364,7 +364,9 @@ export const analyzeNarrativeToScenes = async (
     CASE 3: SEQUENCE (V2.4 LOGIC)
     - You MUST plan the visual flow.
     - SEPARATOR: You MUST separate the visual description for EACH frame using the delimiter " ||| ".
-    - Example for 2 frames: "Visual Frame 1 description ||| Visual Frame 2 description starting with Referensi..."
+    - Each segment MUST be a complete visual description (character action + easter_egg). DO NOT just write style suffix.
+    - Apply the style suffix ONLY to the FINAL segment (the last " ||| " part).
+    - Example for 2 frames: "Ilmu Lidi mengangkat tangannya dengan terkejut. easter_egg: pokeball ||| Ilmu Lidi menurunkan tangannya dengan tenang. easter_egg: chess piece. Modern 2D webcomic style, white background, bold clean line art"
 
     CASE 4: SINGLE PANEL (Standard)
     - Standard visual description. Include 'easter_egg'.
@@ -517,9 +519,9 @@ export const analyzeNarrativeToScenes = async (
                      }
                 }
 
-                // Restore mandatory style if lost during split
-                const styleCheck = "Modern 2D webcomic style"; // Basic check
-                if (!p.includes(styleCheck)) {
+                // Restore mandatory style ONLY to last segment if lost during split
+                const isLastSegment = (i === textSegments.length - 1);
+                if (isLastSegment && !p.includes("white background")) {
                     p += " " + styleSuffix;
                 }
 
