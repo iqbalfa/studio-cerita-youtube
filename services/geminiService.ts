@@ -333,7 +333,12 @@ export const analyzeNarrativeToScenes = async (
     - ONLY describe: (1) Character action/pose/expression, (2) Easter egg items.
     - Example WRONG: "Ilmu Lidi berdiri di dalam kantor modern"
     - Example CORRECT: "Ilmu Lidi sedang menunjuk ke kamera dengan ekspresi terkejut"
-    
+
+    🚫 PROHIBITED EASTER EGG TYPES (DO NOT USE — COPYRIGHTS):
+    - Star Wars, Iron Man, Spider-Man, or any Marvel/DC superhero characters
+    - Any other copyrighted characters, brands, or IP-protected references
+    - Use ONLY generic pop culture references or public domain items instead.
+
     RULE 1: EASTER EGGS (MANDATORY)
     - You MUST include ${easterEggCount} specific easter egg(s) in the description.
     - Types: ${easterEggTypes.join(", ")}.
@@ -736,6 +741,11 @@ export const refineScenePrompt = async (
     ⚠️ STRICT LOCATION PROHIBITION (NON-NEGOTIABLE):
     - The visual prompt MUST NEVER contain any location, place, background, setting, indoor, outdoor, spatial context, or environmental description.
     - ONLY describe: (1) Character action/pose/expression, (2) Easter egg items.
+
+    🚫 PROHIBITED EASTER EGG TYPES (DO NOT USE — COPYRIGHTS):
+    - Star Wars, Iron Man, Spider-Man, or any Marvel/DC superhero characters
+    - Any other copyrighted characters, brands, or IP-protected references
+    - Use ONLY generic pop culture references or public domain items instead.
 
     CRITICAL: 
     - NEVER use "Karakter Utama" or "Main Character". 
