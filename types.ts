@@ -61,9 +61,12 @@ export interface AppState {
   globalSourceRefs: string[]; // New: up to 2 reference images for all character generation
   voiceDirectorVersion: string; // New: output for voice director transformation
   ttsVoice: string;
-  ttsCopies: number;
-  ttsPreset: 'Ilmu Lidi' | 'Ilmu Survival' | 'Norman' | 'Ilmu Nyantuy' | 'Ilmu Psikologi' | 'Custom';
-  ttsCustomInstruction: string;
+  ttsPreset: 'Ilmu Lidi' | 'Ilmu Survival' | 'Ilmu Nyantuy' | 'Ilmu Psikologi' | 'Custom';
+  // Custom TTS fields (used when preset = Custom or for manual editing)
+  ttsSpeakerProfile: string;
+  ttsScene: string;
+  ttsDirectorNotes: string;
+  ttsInlineTags: string;
 }
 
 export const ILMU_LIDI_STYLE = "Modern 2D webcomic style, white background, bold clean line art, stylized character design, flat colors with cel-shading, cinematic dramatic lighting, volumetric atmosphere, rim lighting, deep shadows, ambient occlusion, depth of field, sharp focus on subject, 8k resolution, high quality digital illustration.";

@@ -270,12 +270,33 @@ const createAudioBlob = (base64: string, mimeType: string): Blob => {
   return new Blob([wavHeader, bytes], { type: 'audio/wav' });
 };
 
-const TTS_PRESETS: Record<string, string> = {
-  'Ilmu Lidi': "Gunakan persona Teman Cerita yang KASUAL, BERSAHABAT, dan sedikit NYELENEH. Gunakan PITCH SEDANG, tempo NORMAL yang mengalir wajar. Suara harus NATURAL DAN BERCELOTEH, seolah sedang nongkrong sambil ngopi. Beri JEDA MANUSIAWI sebelum fakta penting. Gunakan ayunan intonasi pada akhir kalimat tanya. Sampaikan materi dengan gaya akrab 'eh dengerin deh'.",
-  'Ilmu Survival': "Gunakan persona Survivor yang TANGGUH, WASPADA, namun tetap TENANG. Gunakan PITCH SEDANG-RENDAH, tempo SEDIKIT LEBIH LAMBAT dan TEGAS. Suara harus terdengar SERIUS, BERWIBAWA, dan PENGALAMAN. Beri JEDA MANUSIAWI yang cukup panjang sebelum poin krusial untuk menciptakan ketegangan. Gunakan intonasi yang datar namun penuh penekanan pada kata-kata kunci keselamatan. Sampaikan materi dengan gaya 'dengerin, ini masalah hidup dan mati'.",
-  'Ilmu Nyantuy': "Gunakan persona Teman Cerita yang KASUAL dan BERSAHABAT. PENTING: Ikuti aturan teknis berikut secara ketat: 1. Gunakan PITCH SEDANG, hindari nada melengking, hindari nada terlalu berat. 2. Gunakan TEMPO NORMAL yang mengalir wajar. Bicaralah dengan ritme orang yang sedang nongkrong dan bercerita. Jangan terburu-buru, jangan melambat. 3. Suara harus NATURAL DAN BERCELOTEH (Conversational). Tunjukkan pembawaan rileks seolah sedang menjelaskan sesuatu yang menarik sambil menikmati segelas kopi. Jangan kaku membacakan teks lurus bak penyiar berita. 4. Terapkan JEDA MANUSIAWI. Beri jeda sepersekian detik sebelum membeberkan fakta penting, seolah sedang berpikir memilah kata. Gunakan ayunan intonasi pada akhir kalimat tanya untuk memancing rasa penasaran. 5. Sampaikan materi psikologi dengan gaya akrab 'eh dengerin deh'. Biarkan penyampaian terasa sedikit spontan supaya pendengar merasa sedang berinteraksi dengan manusia sungguhan:",
-  'Norman': "Gunakan persona yang formal, informatif, dan sedikit kaku seperti penyiar berita. Gunakan pitch yang stabil, tempo yang teratur, dan intonasi yang datar. Hindari gaya berceloteh atau jeda yang terlalu lama. Sampaikan materi secara langsung dan objektif.",
-  'Ilmu Psikologi': "Gunakan persona Psikolog yang RAMAH, HANGAT, dan PENUH EMPATI. PENTING: Ikuti aturan teknis berikut secara ketat: 1. Gunakan PITCH SEDANG-RENDAH, nada yang lembut tapi jelas, hindari nada datar seperti membacakan buku. 2. Gunakan TEMPO SANTAI tapi TETAP JELAS. Bicaralah dengan ritme orang yang sedang menjelaskan sesuatu yang menarik di kafe — tidak terburu-buru, tapi tetap terstruktur. Jangan terlalu cepat saat menyebutkan istilah psikologi, beri waktu pendengar mencerna. 3. Suara harus terdengar RELATABLE DAN MUDAH DIAJAK NGOBROL (Conversational). Tunjukkan pembawaan hangat seolah sedang curhat ringan dengan teman dekat, bukan menggurui seperti dosen. Ada rasa penasaran dan antusiasme dalam intonasi saat membahas fenomena psikologi. 4. Terapkan JEDA MANUSIAWI yang strategis. Beri jeda sepersekian detik sebelum mengungkapkan istilah teknis, lalu langsung jelaskan dengan bahasa sehari-hari. Gunakan jeda juga setelah pertanyaan retoris untuk memberi ruang pendengar berpikir. 5. Gunakan AYUNAN INTONASI yang natural — sedikit naik saat memberi insight mengejutkan ('tahu nggak, ternyata...'), sedikit melambat saat bagian reflektif. Sampaikan dengan gaya 'nah, ini yang jarang orang sadari, tapi begitu denger, langsung nyambung'. Biarkan penyampaian terasa spontan dan personal supaya pendengar merasa sedang berbicara dengan psikolog yang benar-benar peduli."
+// New structured TTS presets for Gemini 3.1 Flash TTS
+// Each preset has: speakerProfile, scene, directorNotes
+const TTS_PRESETS: Record<string, {
+  speakerProfile: string;
+  scene: string;
+  directorNotes: string;
+}> = {
+  'Ilmu Lidi': {
+    speakerProfile: "Narrator is a friendly, slightly nerdy Indonesian guy in his 20s. Voice is warm with a hint of gravel. Speaks casually like chatting with a friend over coffee.",
+    scene: "Sitting in a cozy coffee shop, afternoon light, relaxed atmosphere, occasional background chatter.",
+    directorNotes: "Speak with casual, flowing tempo. Add natural pauses before important facts. Use slight upward intonation on rhetorical questions. Deliver with genuine excitement — this person really loves sharing interesting knowledge. Sound like someone who just discovered something cool and can't wait to tell you about it."
+  },
+  'Ilmu Survival': {
+    speakerProfile: "Narrator is a tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative with a weathered quality. Speaks like someone who's been through real situations.",
+    scene: "Standing in a dense forest at dawn, surrounded by tall trees and morning mist. Quiet except for distant bird calls.",
+    directorNotes: "Speak with measured, deliberate pace. Add dramatic pauses before critical survival tips — let tension build. Use serious, low-key intensity. When mentioning dangers, drop your pitch slightly. Sound like someone who's seen things go wrong and wants to make sure you don't."
+  },
+  'Ilmu Nyantuy': {
+    speakerProfile: "Narrator is a playful, witty Indonesian guy in his 20s. Voice is light, energetic, and infectious with natural comedic timing. Speaks like your funniest friend.",
+    scene: "In a casual living room, lounging on a couch, relaxed and cozy. Occasional background sounds of daily life.",
+    directorNotes: "Deliver with playful energy and deadpan humor. Use comedic timing — pause before punchlines. Mix excitement with casual sarcasm. When something's funny, let it show in your voice. Keep the vibe light but still get the point across."
+  },
+  'Ilmu Psikologi': {
+    speakerProfile: "Narrator is a warm, empathetic Indonesian psychologist in her 30s. Voice is soft, clear, and genuinely caring. Speaks like someone who truly understands human struggles.",
+    scene: "In a quiet, comfortable consultation room with soft lighting and warm tones. Peaceful and private.",
+    directorNotes: "Speak with calm, measured warmth. Slow down for complex psychological concepts — give listeners time to absorb. Show genuine empathy in your tone, especially for sensitive topics. Use subtle upward intonation for insights. Sound like a trusted friend who's also an expert."
+  }
 };
 
 const App: React.FC = () => {
@@ -302,9 +323,11 @@ const App: React.FC = () => {
     globalSourceRefs: [],
     voiceDirectorVersion: '',
     ttsVoice: 'Iapetus',
-    ttsCopies: 1,
     ttsPreset: 'Ilmu Lidi',
-    ttsCustomInstruction: ''
+    ttsSpeakerProfile: TTS_PRESETS['Ilmu Lidi'].speakerProfile,
+    ttsScene: TTS_PRESETS['Ilmu Lidi'].scene,
+    ttsDirectorNotes: TTS_PRESETS['Ilmu Lidi'].directorNotes,
+    ttsInlineTags: ''
   });
 
   const [isTransformingVoice, setIsTransformingVoice] = useState(false);
@@ -370,25 +393,28 @@ const App: React.FC = () => {
 
     setIsGeneratingTTS(true);
     setGeneratedAudioUrls([]);
-    
-    try {
-        const instruction = state.ttsPreset === 'Custom' ? state.ttsCustomInstruction : TTS_PRESETS[state.ttsPreset];
-        const urls: string[] = [];
 
-        // Generate copies
-        for (let i = 0; i < state.ttsCopies; i++) {
-            const result = await generateTTS(
-                state.voiceDirectorVersion,
-                state.ttsVoice,
-                instruction,
-                state.geminiApiKey
-            );
-            
-            const blob = createAudioBlob(result.data, result.mimeType);
-            urls.push(URL.createObjectURL(blob));
-        }
-        
-        setGeneratedAudioUrls(urls);
+    try {
+        const preset = TTS_PRESETS[state.ttsPreset];
+        const speakerProfile = state.ttsPreset === 'Custom' ? state.ttsSpeakerProfile : preset.speakerProfile;
+        const scene = state.ttsPreset === 'Custom' ? state.ttsScene : preset.scene;
+        const directorNotes = state.ttsPreset === 'Custom' ? state.ttsDirectorNotes : preset.directorNotes;
+
+        const textToSpeak = state.ttsInlineTags.trim()
+            ? `${state.ttsInlineTags.trim()}\n\n${state.voiceDirectorVersion}`
+            : state.voiceDirectorVersion;
+
+        const result = await generateTTS(
+            textToSpeak,
+            state.ttsVoice,
+            speakerProfile,
+            scene,
+            directorNotes,
+            state.geminiApiKey
+        );
+
+        const blob = createAudioBlob(result.data, result.mimeType);
+        setGeneratedAudioUrls([URL.createObjectURL(blob)]);
     } catch (error: any) {
         alert("TTS Error: " + error.message);
     } finally {
@@ -1240,7 +1266,10 @@ const App: React.FC = () => {
             easterEggCount: 1,
             easterEggTypes: ['pop culture'],
             ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Lidi'
+            ttsPreset: 'Ilmu Lidi',
+            ttsSpeakerProfile: TTS_PRESETS['Ilmu Lidi'].speakerProfile,
+            ttsScene: TTS_PRESETS['Ilmu Lidi'].scene,
+            ttsDirectorNotes: TTS_PRESETS['Ilmu Lidi'].directorNotes
           }));
         } else if (val === 'ILMU SURVIVAL') {
           setState(p => ({
@@ -1251,7 +1280,10 @@ const App: React.FC = () => {
             easterEggCount: 2,
             easterEggTypes: ['pop culture', 'khas indonesia'],
             ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Survival'
+            ttsPreset: 'Ilmu Survival',
+            ttsSpeakerProfile: TTS_PRESETS['Ilmu Survival'].speakerProfile,
+            ttsScene: TTS_PRESETS['Ilmu Survival'].scene,
+            ttsDirectorNotes: TTS_PRESETS['Ilmu Survival'].directorNotes
           }));
         } else if (val === 'ILMU NYANTUY') {
           setState(p => ({
@@ -1262,7 +1294,10 @@ const App: React.FC = () => {
             easterEggCount: 2,
             easterEggTypes: ['pop culture', 'khas indonesia'],
             ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Nyantuy'
+            ttsPreset: 'Ilmu Nyantuy',
+            ttsSpeakerProfile: TTS_PRESETS['Ilmu Nyantuy'].speakerProfile,
+            ttsScene: TTS_PRESETS['Ilmu Nyantuy'].scene,
+            ttsDirectorNotes: TTS_PRESETS['Ilmu Nyantuy'].directorNotes
           }));
         } else if (val === 'ILMU PSIKOLOGI') {
           setState(p => ({
@@ -1273,7 +1308,10 @@ const App: React.FC = () => {
             easterEggCount: 1,
             easterEggTypes: ['pop culture'],
             ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Psikologi'
+            ttsPreset: 'Ilmu Psikologi',
+            ttsSpeakerProfile: TTS_PRESETS['Ilmu Psikologi'].speakerProfile,
+            ttsScene: TTS_PRESETS['Ilmu Psikologi'].scene,
+            ttsDirectorNotes: TTS_PRESETS['Ilmu Psikologi'].directorNotes
           }));
         } else {
           setState(p => ({ ...p, stylePreset: 'Custom' }));
@@ -1527,55 +1565,161 @@ const App: React.FC = () => {
                             onChange={(e) => setState(prev => ({ ...prev, voiceDirectorVersion: e.target.value }))}
                         />
 
-                        {/* TTS Controls */}
+                        {/* TTS Controls - Redesigned for Gemini 3.1 Flash TTS */}
                         <div className="p-4 bg-surface-hover rounded-xl border border-border space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                            {/* Preset Selector */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest">Voice Preset</label>
+                                    <select
+                                        value={state.ttsPreset}
+                                        onChange={(e) => {
+                                            const preset = TTS_PRESETS[e.target.value];
+                                            if (preset) {
+                                                setState(p => ({
+                                                    ...p,
+                                                    ttsPreset: e.target.value as any,
+                                                    ttsSpeakerProfile: preset.speakerProfile,
+                                                    ttsScene: preset.scene,
+                                                    ttsDirectorNotes: preset.directorNotes,
+                                                    ttsInlineTags: ''
+                                                }));
+                                            } else {
+                                                setState(p => ({ ...p, ttsPreset: 'Custom' }));
+                                            }
+                                        }}
+                                        className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
+                                    >
+                                        <option value="Ilmu Lidi">Ilmu Lidi</option>
+                                        <option value="Ilmu Survival">Ilmu Survival</option>
+                                        <option value="Ilmu Nyantuy">Ilmu Nyantuy</option>
+                                        <option value="Ilmu Psikologi">Ilmu Psikologi</option>
+                                        <option value="Custom">Custom...</option>
+                                    </select>
+                                </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-muted uppercase tracking-widest">{t.ttsVoice}</label>
-                                    <select 
+                                    <select
                                         value={state.ttsVoice}
                                         onChange={(e) => setState(prev => ({ ...prev, ttsVoice: e.target.value }))}
                                         className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
                                     >
-                                        {['Iapetus', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Zephyr'].map(v => (
-                                            <option key={v} value={v}>{v}</option>
-                                        ))}
+                                        <optgroup label="Male">
+                                            <option value="Kore">Kore (Male, Balanced)</option>
+                                            <option value="Fenrir">Fenrir (Male, Strong)</option>
+                                            <option value="Zephyr">Zephyr (Male, Clear)</option>
+                                            <option value="Iapetus">Iapetus (Male, Warm)</option>
+                                            <option value="Puck">Puck (Male, Expressive)</option>
+                                            <option value="Charon">Charon (Male, Deep)</option>
+                                            <option value="Algenib">Algenib (Male, Gravelly)</option>
+                                            <option value="Achenar">Achenar (Male, Authoritative)</option>
+                                        </optgroup>
+                                        <optgroup label="Female">
+                                            <option value="OrUS">OrUS (Female, Clear)</option>
+                                            <option value="Lami">Lami (Female, Warm)</option>
+                                            <option value="Kore-F">Kore (Female, Balanced)</option>
+                                        </optgroup>
                                     </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest">{t.ttsCopies}</label>
-                                    <select 
-                                        value={state.ttsCopies}
-                                        onChange={(e) => setState(prev => ({ ...prev, ttsCopies: parseInt(e.target.value) }))}
-                                        className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
-                                    >
-                                        {[1, 2, 3, 4, 5].map(n => (
-                                            <option key={n} value={n}>{n} Copy</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-muted uppercase tracking-widest">{t.ttsPreset}</label>
-                                    <input 
-                                        type="text"
-                                        value={state.ttsPreset}
-                                        onChange={(e) => setState(prev => ({ ...prev, ttsPreset: e.target.value }))}
-                                        className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
-                                    />
                                 </div>
                             </div>
 
+                            {/* Speaker Profile */}
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-muted uppercase tracking-widest">{t.ttsCustom}</label>
-                                <textarea 
-                                    value={state.ttsPreset === 'Custom' ? state.ttsCustomInstruction : TTS_PRESETS[state.ttsPreset]}
-                                    onChange={(e) => setState(prev => ({ ...prev, ttsCustomInstruction: e.target.value, ttsPreset: 'Custom' }))}
-                                    className={`w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px] resize-none transition-all ${state.ttsPreset !== 'Custom' ? 'opacity-70' : ''}`}
-                                    placeholder="Masukkan instruksi gaya bicara kustom..."
+                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-widest flex items-center gap-1">
+                                    <span>🎭</span> Speaker Profile
+                                </label>
+                                <textarea
+                                    value={state.ttsSpeakerProfile}
+                                    onChange={(e) => setState(prev => ({ ...prev, ttsSpeakerProfile: e.target.value, ttsPreset: 'Custom' }))}
+                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[56px] resize-none transition-all"
+                                    placeholder="Describe who the narrator is: age, personality, voice quality..."
                                 />
                             </div>
 
+                            {/* Scene / Setting */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1">
+                                    <span>🎬</span> Scene / Setting
+                                </label>
+                                <textarea
+                                    value={state.ttsScene}
+                                    onChange={(e) => setState(prev => ({ ...prev, ttsScene: e.target.value, ttsPreset: 'Custom' }))}
+                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[56px] resize-none transition-all"
+                                    placeholder="Describe where the narrator is: coffee shop, forest, living room..."
+                                />
+                            </div>
+
+                            {/* Director's Notes */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-green-400 uppercase tracking-widest flex items-center gap-1">
+                                    <span>🎬</span> Director's Notes
+                                </label>
+                                <textarea
+                                    value={state.ttsDirectorNotes}
+                                    onChange={(e) => setState(prev => ({ ...prev, ttsDirectorNotes: e.target.value, ttsPreset: 'Custom' }))}
+                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[72px] resize-none transition-all"
+                                    placeholder="How should the narrator speak: tempo, tone, emotion, pauses..."
+                                />
+                            </div>
+
+                            {/* Inline Audio Tags */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-orange-400 uppercase tracking-widest flex items-center gap-1">
+                                    <span>⚡</span> Inline Audio Tags (Optional)
+                                </label>
+                                <textarea
+                                    value={state.ttsInlineTags}
+                                    onChange={(e) => setState(prev => ({ ...prev, ttsInlineTags: e.target.value }))}
+                                    className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[48px] resize-none transition-all font-mono"
+                                    placeholder="[excitedly] Dengarkan ini! [pause] Eits tapi... [sighs]"
+                                />
+                                <div className="flex flex-wrap gap-1.5">
+                                    {['[excitedly]', '[bored]', '[whispers]', '[laughs]', '[sarcastically]', '[panicked]', '[serious]', '[amazed]', '[sighs]', '[gasp]'].map(tag => (
+                                        <button
+                                            key={tag}
+                                            onClick={() => setState(prev => ({ ...prev, ttsInlineTags: prev.ttsInlineTags + ' ' + tag }))}
+                                            className="px-2 py-0.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded text-[10px] text-purple-400 transition-colors cursor-pointer"
+                                        >
+                                            {tag}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="flex flex-wrap gap-3">
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={() => {
+                                        if (!state.voiceDirectorVersion.trim()) return;
+                                        setIsGeneratingTTS(true);
+                                        const preset = TTS_PRESETS[state.ttsPreset];
+                                        const speakerProfile = state.ttsPreset === 'Custom' ? state.ttsSpeakerProfile : preset.speakerProfile;
+                                        const scene = state.ttsPreset === 'Custom' ? state.ttsScene : preset.scene;
+                                        const directorNotes = state.ttsPreset === 'Custom' ? state.ttsDirectorNotes : preset.directorNotes;
+                                        const textToSpeak = state.ttsInlineTags.trim()
+                                            ? `${state.ttsInlineTags.trim()}\n\n${state.voiceDirectorVersion}`
+                                            : state.voiceDirectorVersion;
+                                        generateTTS(textToSpeak, state.ttsVoice, speakerProfile, scene, directorNotes, state.geminiApiKey)
+                                            .then(result => {
+                                                const blob = createAudioBlob(result.data, result.mimeType);
+                                                setGeneratedAudioUrls([URL.createObjectURL(blob)]);
+                                            })
+                                            .catch(err => alert("Preview Error: " + err.message))
+                                            .finally(() => setIsGeneratingTTS(false));
+                                    }}
+                                    disabled={isGeneratingTTS || !state.voiceDirectorVersion.trim()}
+                                    className={`flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition-all border
+                                        ${isGeneratingTTS || !state.voiceDirectorVersion.trim()
+                                            ? 'bg-gray-100 text-muted border-border cursor-not-allowed'
+                                            : 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
+                                        }`}
+                                >
+                                    <Icons.monitor />
+                                    Preview
+                                </motion.button>
+
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
