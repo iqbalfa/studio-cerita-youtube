@@ -1431,9 +1431,9 @@ const App: React.FC = () => {
                                                       }}
                                                       className="bg-transparent text-foreground text-xs outline-none flex-1 cursor-pointer"
                                                   >
-                                                      <option value="pop culture" className="bg-slate-900 text-foreground">Pop Culture</option>
-                                                      <option value="internasional" className="bg-slate-900 text-foreground">Internasional</option>
-                                                      <option value="khas indonesia" className="bg-slate-900 text-foreground">Khas Indonesia</option>
+                                                      <option value="pop culture" className="bg-white text-foreground">Pop Culture</option>
+                                                      <option value="internasional" className="bg-white text-foreground">Internasional</option>
+                                                      <option value="khas indonesia" className="bg-white text-foreground">Khas Indonesia</option>
                                                   </select>
                                               </motion.div>
                                           ))}
@@ -1477,7 +1477,7 @@ const App: React.FC = () => {
                             {t.targetParagraph}
                         </label>
                         <textarea
-                            className="w-full flex-1 min-h-[120px] bg-slate-900 border border-blue-500/30 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none scrollbar-thin placeholder-gray-400 text-foreground leading-relaxed shadow-inner"
+                            className="w-full flex-1 min-h-[120px] bg-surface-hover border border-border rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none scrollbar-thin placeholder-gray-400 text-foreground leading-relaxed"
                             placeholder={t.targetPlaceholder}
                             value={state.targetParagraph}
                             onChange={handleTargetChange}
@@ -1503,26 +1503,26 @@ const App: React.FC = () => {
                     </div>
 
                     <div className="space-y-2 flex flex-col flex-1">
-                        <label className="text-xs font-bold text-purple-600 uppercase tracking-wider flex items-center gap-2">
+                        <label className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2">
                             <Icons.monitor />
                             {t.voiceDirectorTitle}
                         </label>
                         <textarea
-                            className="w-full flex-1 min-h-[120px] bg-slate-900 border border-purple-500/30 rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all resize-none scrollbar-thin placeholder-gray-400 text-foreground leading-relaxed shadow-inner"
+                            className="w-full flex-1 min-h-[120px] bg-surface-hover border border-border rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all resize-none scrollbar-thin placeholder-gray-400 text-foreground leading-relaxed"
                             placeholder={t.voiceDirectorPlaceholder}
                             value={state.voiceDirectorVersion}
                             onChange={(e) => setState(prev => ({ ...prev, voiceDirectorVersion: e.target.value }))}
                         />
 
                         {/* TTS Controls */}
-                        <div className="p-4 bg-slate-900/50 rounded-xl border border-purple-500/20 space-y-4">
+                        <div className="p-4 bg-surface-hover rounded-xl border border-border space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-muted uppercase tracking-widest">{t.ttsVoice}</label>
                                     <select 
                                         value={state.ttsVoice}
                                         onChange={(e) => setState(prev => ({ ...prev, ttsVoice: e.target.value }))}
-                                        className="w-full bg-gray-100 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
+                                        className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
                                     >
                                         {['Iapetus', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Zephyr'].map(v => (
                                             <option key={v} value={v}>{v}</option>
@@ -1534,7 +1534,7 @@ const App: React.FC = () => {
                                     <select 
                                         value={state.ttsCopies}
                                         onChange={(e) => setState(prev => ({ ...prev, ttsCopies: parseInt(e.target.value) }))}
-                                        className="w-full bg-gray-100 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
+                                        className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
                                     >
                                         {[1, 2, 3, 4, 5].map(n => (
                                             <option key={n} value={n}>{n} Copy</option>
@@ -1547,7 +1547,7 @@ const App: React.FC = () => {
                                         type="text"
                                         value={state.ttsPreset}
                                         onChange={(e) => setState(prev => ({ ...prev, ttsPreset: e.target.value }))}
-                                        className="w-full bg-gray-100 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
+                                        className="w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500"
                                     />
                                 </div>
                             </div>
@@ -1557,7 +1557,7 @@ const App: React.FC = () => {
                                 <textarea 
                                     value={state.ttsPreset === 'Custom' ? state.ttsCustomInstruction : TTS_PRESETS[state.ttsPreset]}
                                     onChange={(e) => setState(prev => ({ ...prev, ttsCustomInstruction: e.target.value, ttsPreset: 'Custom' }))}
-                                    className={`w-full bg-gray-100 border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px] resize-none transition-all ${state.ttsPreset !== 'Custom' ? 'opacity-70' : ''}`}
+                                    className={`w-full bg-white border border-border rounded-lg px-3 py-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px] resize-none transition-all ${state.ttsPreset !== 'Custom' ? 'opacity-70' : ''}`}
                                     placeholder="Masukkan instruksi gaya bicara kustom..."
                                 />
                             </div>
@@ -1571,7 +1571,7 @@ const App: React.FC = () => {
                                     className={`flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl text-xs font-bold transition-all shadow-lg
                                         ${isGeneratingTTS || !state.voiceDirectorVersion.trim()
                                             ? 'bg-gray-100 text-muted cursor-not-allowed'
-                                            : 'bg-purple-500 hover:bg-purple-600 text-foreground shadow-purple-900/20'
+                                            : 'bg-purple-500 hover:bg-purple-600 text-white shadow-purple-900/20'
                                         }`}
                                 >
                                     {isGeneratingTTS ? (
