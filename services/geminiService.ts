@@ -327,6 +327,13 @@ export const analyzeNarrativeToScenes = async (
 
     CRITICAL - VISUAL PROMPT STRUCTURE:
     
+    ⚠️ STRICT LOCATION PROHIBITION (NON-NEGOTIABLE):
+    - The narrative text may contain location descriptions (e.g. "Di dalam kantor", "Di ruangan kelas"). IGNORE them completely.
+    - The visual prompt MUST NEVER contain any location, place, background, setting, indoor, outdoor, spatial context, or environmental description.
+    - ONLY describe: (1) Character action/pose/expression, (2) Easter egg items.
+    - Example WRONG: "Ilmu Lidi berdiri di dalam kantor modern"
+    - Example CORRECT: "Ilmu Lidi sedang menunjuk ke kamera dengan ekspresi terkejut"
+    
     RULE 1: EASTER EGGS (MANDATORY)
     - You MUST include ${easterEggCount} specific easter egg(s) in the description.
     - Types: ${easterEggTypes.join(", ")}.
@@ -726,6 +733,10 @@ export const refineScenePrompt = async (
 
     Output ONLY the revised prompt text in ${language === 'en' ? 'ENGLISH' : 'INDONESIAN'}.
     
+    ⚠️ STRICT LOCATION PROHIBITION (NON-NEGOTIABLE):
+    - The visual prompt MUST NEVER contain any location, place, background, setting, indoor, outdoor, spatial context, or environmental description.
+    - ONLY describe: (1) Character action/pose/expression, (2) Easter egg items.
+
     CRITICAL: 
     - NEVER use "Karakter Utama" or "Main Character". 
     - ALWAYS use the specific character Name from the provided Characters list.
@@ -734,7 +745,7 @@ export const refineScenePrompt = async (
     - DO NOT include any location or background setting in the visual description.
     - MAINTAIN "easter_egg" if present.
     - ${isCharacter ? 'MANDATORY: Include the phrase "Fullbody Shot".' : 'STRICTLY FORCE "Half-Body Shot" or wider. No close-ups of just hands/feet.'}
-    ${isCharacter ? "- ENSURE the background is explicitly mentioned as 'pure white background'." : `- IF no character is present, ADD "${narratorName}" observing the scene.`}
+    - ENSURE the background is explicitly mentioned as "pure white background".
     
     STYLE PRESERVATION:
     - The revised prompt MUST still contain: "${finalStyleSuffix}"
