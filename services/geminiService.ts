@@ -235,7 +235,7 @@ export const analyzeNarrativeToScenes = async (
               items: {
                 type: Type.OBJECT,
                 properties: {
-                    visualPrompt: { type: Type.STRING, description: `Detailed prompt in ${language === 'en' ? 'ENGLISH' : 'INDONESIAN'} (International Context). Must include 'easter_egg' as per instructions.` },
+                    visualPrompt: { type: Type.STRING, description: `⚠️ VISUAL DESCRIPTION ONLY — NOT narrative text. Describe what the character is doing (action, pose, expression). Must include easter_egg item. End with style suffix. DO NOT copy the narrative text.` },
                     format: { type: Type.STRING, description: "Format: 'Single Panel', 'Multi Panel (2)', 'Multi Panel (3)', or 'Sequence'. RULE: If 'splitText' array has more than 1 item, Format CANNOT be 'Single Panel'." },
                     splitText: { 
                         type: Type.ARRAY, 
@@ -434,6 +434,13 @@ export const analyzeNarrativeToScenes = async (
       frames: scene.frames.flatMap((frame, fIdx) => {
         let correctedFormat = frame.format;
         const textSegments = frame.splitText || [];
+
+        // VALIDATION: Ensure visualPrompt has style suffix and is not narrative text
+        let validatedPrompt = (frame.visualPrompt || "").trim();
+        if (!validatedPrompt.includes("white background")) {
+            validatedPrompt += " " + styleSuffix;
+        }
+        frame.visualPrompt = validatedPrompt;
         let isSequence = false;
 
         // STRICT LOGIC ENFORCEMENT:
