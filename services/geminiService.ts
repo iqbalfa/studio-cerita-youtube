@@ -813,7 +813,8 @@ export const transformToVoiceDirector = async (
 Tugas:
 1. Analisis Teks: Baca dan pahami konteks serta emosi dari teks yang diberikan.
 2. Tambahkan Keterangan Emosi: Sisipkan sound cues (keterangan suara) TEPAT SEBELUM frasa atau kata yang ingin diubah suaranya.
-   - Gunakan HANYA list ini: [whisper], [sigh], [chuckle], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [fast pace], [pause 2s].
+   - Gunakan HANYA list sound cues ini:
+     [whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s].
    - PENTING: Sound cues harus tepat sesuai format list tersebut.
    - PENTING: Hindari meletakkan sound cue di akhir naskah.
    - BAHASA: Gunakan bahasa ${language === 'id' ? 'Indonesia' : 'Inggris'} untuk sound cues.

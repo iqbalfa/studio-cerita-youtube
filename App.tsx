@@ -278,24 +278,24 @@ const TTS_PRESETS: Record<string, {
   directorNotes: string;
 }> = {
   'Ilmu Lidi': {
-    speakerProfile: "Narrator is a friendly, slightly nerdy Indonesian guy in his 20s. Voice is warm and natural. Speaks casually like chatting with a friend over coffee.",
+    speakerProfile: "A 20-something Indonesian guy. Speaks casually with natural fillers like 'nah', 'kan', 'gitu'. Voice goes up when curious, slows down for important points. Treats the listener as a close friend, not an audience. Enthusiastic but genuine — never fake or salesy.",
     scene: "Sitting in a cozy coffee shop, afternoon light, relaxed atmosphere.",
-    directorNotes: "IMPORTANT: Keep the tempo at NORMAL SPEED — medium pace, not too fast, not too slow. Bicaralah dengan ritme yang wajar dan santai, jangan terburu-buru. Add brief pauses before important facts. Use natural upward intonation on rhetorical questions. Sound like someone genuinely excited to share knowledge with a close friend."
+    directorNotes: "Read this paragraph as if telling a story to a friend. Vary your pace naturally — slow down for important parts, speed up for excitement. Use brief pauses before key facts. Sound interested, not reading a script. Let your genuine curiosity show."
   },
   'Ilmu Survival': {
-    speakerProfile: "Narrator is a tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative with a weathered quality. Speaks like someone who's been through real situations.",
+    speakerProfile: "A tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative — like someone who's been through real situations. Speaks with quiet confidence, not arrogance.",
     scene: "Standing in a dense forest at dawn, surrounded by tall trees and morning mist. Quiet except for distant bird calls.",
-    directorNotes: "Speak with measured, deliberate pace. Add dramatic pauses before critical survival tips — let tension build. Use serious, low-key intensity. When mentioning dangers, drop your pitch slightly. Sound like someone who's seen things go wrong and wants to make sure you don't."
+    directorNotes: "Read this paragraph with serious, grounded energy. Use dramatic pauses before critical survival tips — let tension build. When mentioning dangers, drop your pitch slightly. Sound like someone who wants to make sure you survive."
   },
   'Ilmu Nyantuy': {
-    speakerProfile: "Narrator is a playful, witty Indonesian guy in his 20s. Voice is light, energetic, and infectious with natural comedic timing. Speaks like your funniest friend.",
+    speakerProfile: "A playful, witty Indonesian guy in his 20s. Voice is light, energetic, and infectious with natural comedic timing. Speaks like your funniest friend who knows when to be serious.",
     scene: "In a casual living room, lounging on a couch, relaxed and cozy. Occasional background sounds of daily life.",
     directorNotes: "Deliver with playful energy and deadpan humor. Use comedic timing — pause before punchlines. Mix excitement with casual sarcasm. When something's funny, let it show in your voice. Keep the vibe light but still get the point across."
   },
   'Ilmu Psikologi': {
-    speakerProfile: "Narrator is a warm, empathetic Indonesian psychologist in her 30s. Voice is soft, clear, and genuinely caring. Speaks like someone who truly understands human struggles.",
+    speakerProfile: "A warm, empathetic Indonesian psychologist in her 30s. Voice is soft, clear, and genuinely caring — like someone who truly understands human struggles. Speaks with quiet confidence and real empathy.",
     scene: "In a quiet, comfortable consultation room with soft lighting and warm tones. Peaceful and private.",
-    directorNotes: "Speak with calm, measured warmth. Slow down for complex psychological concepts — give listeners time to absorb. Show genuine empathy in your tone, especially for sensitive topics. Use subtle upward intonation for insights. Sound like a trusted friend who's also an expert."
+    directorNotes: "Speak with calm, measured warmth. Slow down for complex concepts — give listeners time to absorb. Show genuine empathy, especially for sensitive topics. Use subtle upward intonation for insights. Sound like a trusted friend who's also an expert."
   }
 };
 
