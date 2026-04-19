@@ -278,9 +278,9 @@ const TTS_PRESETS: Record<string, {
   directorNotes: string;
 }> = {
   'Ilmu Lidi': {
-    speakerProfile: "Narrator is a friendly, slightly nerdy Indonesian guy in his 20s. Voice is warm with a hint of gravel. Speaks casually like chatting with a friend over coffee.",
-    scene: "Sitting in a cozy coffee shop, afternoon light, relaxed atmosphere, occasional background chatter.",
-    directorNotes: "Speak with casual, flowing tempo. Add natural pauses before important facts. Use slight upward intonation on rhetorical questions. Deliver with genuine excitement — this person really loves sharing interesting knowledge. Sound like someone who just discovered something cool and can't wait to tell you about it."
+    speakerProfile: "Narrator is a friendly, slightly nerdy Indonesian guy in his 20s. Voice is warm and natural. Speaks casually like chatting with a friend over coffee.",
+    scene: "Sitting in a cozy coffee shop, afternoon light, relaxed atmosphere.",
+    directorNotes: "IMPORTANT: Keep the tempo at NORMAL SPEED — medium pace, not too fast, not too slow. Bicaralah dengan ritme yang wajar dan santai, jangan terburu-buru. Add brief pauses before important facts. Use natural upward intonation on rhetorical questions. Sound like someone genuinely excited to share knowledge with a close friend."
   },
   'Ilmu Survival': {
     speakerProfile: "Narrator is a tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative with a weathered quality. Speaks like someone who's been through real situations.",
