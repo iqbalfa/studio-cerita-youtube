@@ -278,9 +278,9 @@ const TTS_PRESETS: Record<string, {
   directorNotes: string;
 }> = {
   'Ilmu Lidi': {
-    speakerProfile: "A 20-something Indonesian guy. Speaks clearly and confidently in casual Indonesian. Confident but not arrogant — knows his stuff. Natural and direct, like someone who genuinely loves sharing what he knows.",
+    speakerProfile: "A 20-something Indonesian guy who finds EVERYTHING funny. When something's absurd, his voice goes 'are you serious right now?' When something's shocking, he sounds genuinely amused — like 'bro, what?' Plays it cool but everything surprises him in a funny way.",
     scene: "Sitting in a cozy coffee shop, afternoon light, relaxed atmosphere.",
-    directorNotes: "Speak with CLEAR, CONFIDENT voice. Not whispering, not mumbling. Project your voice as if speaking to a room. Use natural spoken rhythm. When you want to emphasize something, PITCH UP slightly, not down. Keep energy moderate and steady throughout."
+    directorNotes: "Pause before saying the funny or absurd part. Let a slight smirk come through in your voice. When something's ridiculous, sound like you're barely holding back laughter. Use deadpan 'wow, amazing' tone for obvious facts. Don't be monotone — let amusement punctuate the delivery."
   },
   'Ilmu Survival': {
     speakerProfile: "A tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative — like someone who's been through real situations. Speaks with quiet confidence, not arrogance.",
