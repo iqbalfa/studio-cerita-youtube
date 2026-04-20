@@ -278,9 +278,9 @@ const TTS_PRESETS: Record<string, {
   directorNotes: string;
 }> = {
   'Ilmu Lidi': {
-    speakerProfile: "A 20-something Indonesian guy who finds EVERYTHING funny. When something's absurd, his voice goes 'are you serious right now?' When something's shocking, he sounds genuinely amused — like 'bro, what?' Plays it cool but everything surprises him in a funny way.",
-    scene: "Sitting in a cozy coffee shop, afternoon light, relaxed atmosphere.",
-    directorNotes: "Pause before saying the funny or absurd part. Let a slight smirk come through in your voice. When something's ridiculous, sound like you're barely holding back laughter. Use deadpan 'wow, amazing' tone for obvious facts. Don't be monotone — let amusement punctuate the delivery."
+    speakerProfile: "A 20-something Indonesian guy doing a YouTube narration. He's the type of YouTuber who edits his own videos — direct to camera energy, enthusiastic exposition, treats the audience like subscribers not strangers. Natural Indonesian speech, not a formal narrator.",
+    scene: "Recording in a home studio setup. You can hear the mic and the energy of someone who's been editing all day.",
+    directorNotes: "Speak like a YouTuber doing a voice-over — clear, engaging, direct. Project energy without screaming. Use 'gue'/'gua' style, not formal. Pause before key info reveals. Let excitement show in your tone — this is content you CARE about. Stay grounded, not theatrical."
   },
   'Ilmu Survival': {
     speakerProfile: "A tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative — like someone who's been through real situations. Speaks with quiet confidence, not arrogance.",
