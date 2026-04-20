@@ -42,7 +42,7 @@ const distributeItems = (items: string[], count: number, separator: string): str
     const base = Math.floor(items.length / count);
     const extra = items.length % count;
     let current = 0;
-    
+
     for (let i = 0; i < count; i++) {
         const take = base + (i < extra ? 1 : 0);
         const slice = items.slice(current, current + take);
@@ -52,7 +52,54 @@ const distributeItems = (items: string[], count: number, separator: string): str
     return result;
 };
 
-// Robust text distributor that falls back from Sentences -> Clauses -> Words
+// Find natural split points in a word sequence (comma, semicolon, conjunction)
+const findSplitPoints = (words: string[], start: number, end: number): number => {
+    // Scan from end-1 down to start+1 for natural breakpoints
+    for (let i = end - 1; i > start; i--) {
+        const w = words[i].toLowerCase().replace(/[.,;!?]$/, '');
+        if ([',', ';', ':', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'].includes(w)) {
+            return i;
+        }
+    }
+    // No natural breakpoint found — split at midpoint
+    return Math.floor((start + end) / 2);
+};
+
+// Enforce 4-15 words per chunk by splitting at natural breakpoints
+const enforceWordRange = (chunks: string[]): string[] => {
+    return chunks.flatMap(chunk => {
+        const words = chunk.trim().split(/\s+/);
+        if (words.length <= 15) return [chunk];
+
+        const result: string[] = [];
+        let i = 0;
+        while (i < words.length) {
+            if (i + 15 <= words.length) {
+                // Enough words — take exactly 15
+                const splitAt = findSplitPoints(words, i, i + 15);
+                result.push(words.slice(i, splitAt + 1).join(' '));
+                i = splitAt + 1;
+            } else if (i + 4 <= words.length) {
+                // 4-15 words left — take all
+                result.push(words.slice(i).join(' '));
+                break;
+            } else {
+                // <4 words left — merge with previous chunk
+                if (result.length === 0) {
+                    // First chunk itself has <4 words — force take minimum
+                    result.push(words.slice(i, i + 4).join(' '));
+                    i = i + 4;
+                } else {
+                    result[result.length - 1] += ' ' + words.slice(i).join(' ');
+                    break;
+                }
+            }
+        }
+        return result;
+    });
+};
+
+// Robust text distributor: split at natural breakpoints, enforce 4-15 words per chunk
 const distributeText = (text: string, count: number): string[] => {
     if (count <= 1) return [text];
     const cleanText = text.trim();
@@ -61,31 +108,46 @@ const distributeText = (text: string, count: number): string[] => {
     // Strategy 1: Split by Sentences
     const sentenceRegex = /[^.!?\n]+[.!?]+|[^.!?\n]+$/g;
     const sentences = cleanText.match(sentenceRegex)?.map(s => s.trim()).filter(s => s) || [cleanText];
-    
-    if (sentences.length >= count) {
-        return distributeItems(sentences, count, " ");
+
+    // Build initial chunks from sentences
+    let chunks: string[] = [];
+    for (const sentence of sentences) {
+        chunks.push(sentence);
     }
 
-    // Strategy 2: Split by Clauses (Commas, Semicolons, Uppercase transitions)
+    // Enforce 4-15 words per chunk (split oversized sentences)
+    chunks = enforceWordRange(chunks);
+
+    // If we have enough chunks, distribute them across `count` buckets
+    if (chunks.length >= count) {
+        const distributed = distributeItems(chunks, count, " ");
+        return distributed.map(chunk => chunk.trim()).filter(c => c);
+    }
+
+    // Strategy 2: Split by Clauses (Commas, Semicolons)
     const clauseParts = cleanText.split(/([,;])/);
     const clauses: string[] = [];
-    
     for (let i = 0; i < clauseParts.length; i += 2) {
         const part = clauseParts[i];
         const delim = clauseParts[i + 1] || "";
         const combined = (part + delim).trim();
-        if (combined) {
-            clauses.push(combined);
-        }
+        if (combined) clauses.push(combined);
     }
-    
+
     if (clauses.length >= count) {
-        return distributeItems(clauses, count, " ");
+        const distributed = distributeItems(clauses, count, " ");
+        const enforced = enforceWordRange(distributed);
+        // Pad with empty strings if needed to match count
+        while (enforced.length < count) enforced.push("");
+        return enforced.slice(0, count);
     }
 
     // Strategy 3: Split by Words (Fallback)
     const words = cleanText.split(/\s+/);
-    return distributeItems(words, count, " ");
+    const distributed = distributeItems(words, count, " ");
+    const enforced = enforceWordRange(distributed);
+    while (enforced.length < count) enforced.push("");
+    return enforced.slice(0, count);
 };
 
 const TRANSLATIONS: Record<'id' | 'en', any> = {
