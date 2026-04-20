@@ -278,9 +278,9 @@ const TTS_PRESETS: Record<string, {
   directorNotes: string;
 }> = {
   'Ilmu Lidi': {
-    speakerProfile: "A 20-something Indonesian guy doing a YouTube narration. He's the type of YouTuber who edits his own videos — direct to camera energy, enthusiastic exposition, treats the audience like subscribers not strangers. Natural Indonesian speech, not a formal narrator.",
+    speakerProfile: "A 20-something Indonesian guy doing YouTube narration. Internal monologue is permanently amused — he narrates facts while internally going 'bro, that's insane', 'are you serious', 'nah no way'. The contrast between his calm delivery and absurd content is what makes it funny. Uses casual 'gue/gua' style. Treats subscribers like close friends.",
     scene: "Recording in a home studio setup. You can hear the mic and the energy of someone who's been editing all day.",
-    directorNotes: "Speak like a YouTuber doing a voice-over — clear, engaging, direct. Project energy without screaming. Use 'gue'/'gua' style, not formal. Pause before key info reveals. Let excitement show in your tone — this is content you CARE about. Stay grounded, not theatrical."
+    directorNotes: "TEMPO: Normal speed throughout the entire paragraph. Do not speed up, do not slow down. PITCH: Neutral and consistent from start to finish. Do not go higher, do not go lower. Deliver each sentence at the same steady pace. The humor comes from what you say and the personality in your words, not from vocal variation."
   },
   'Ilmu Survival': {
     speakerProfile: "A tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative — like someone who's been through real situations. Speaks with quiet confidence, not arrogance.",
