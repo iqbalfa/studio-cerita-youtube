@@ -788,13 +788,55 @@ const App: React.FC = () => {
         return result.join(' ');
       });
 
+      // Column 1: narrativeText = voiceDirectorVersion stripped of sound cues (master text)
+      const voiceText = state.voiceDirectorVersion.trim().replace(/\[[\s\w]+\]/g, '').trim();
+      // Column 2: splitText distributed from Column 1 based on frame count, max 15 words per chunk
+      const distributed = voiceText ? distributeText(voiceText, scenes.length) : [];
+      const enforcedChunks = distributed.map(s => {
+        const sWords = s.split(/\s+/).filter(w => w);
+        if (sWords.length <= 15) return s;
+        const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
+        const allTokens = s.split(/(\s+)/);
+        const result: string[] = [];
+        let current: string[] = [];
+        let wordCount = 0;
+
+        for (let i = 0; i < allTokens.length; i++) {
+          const token = allTokens[i];
+          if (token.trim() === '') { current.push(token); continue; }
+          wordCount++;
+          current.push(token);
+          const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
+          if ((isBp || wordCount >= 10) && wordCount <= 15) {
+            if (isBp || wordCount === 15 || i === allTokens.length - 1) {
+              const last = current[current.length - 1];
+              if (last && !last.endsWith('.')) {
+                current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
+              }
+              result.push(current.join('').trim());
+              current = [];
+              wordCount = 0;
+            }
+          }
+        }
+        if (current.length > 0) {
+          const joined = current.join('').trim();
+          const last = current[current.length - 1] || '';
+          if (last && !last.endsWith('.')) {
+            result.push(joined.replace(/[,;!?]*$/, '') + '.');
+          } else {
+            result.push(joined);
+          }
+        }
+        return result.join(' ');
+      });
+
       const scenesWithSplitText = scenes.map((scene, idx) => ({
         ...scene,
-        // narrativeText stays as AI-generated narrative (Column 1)
-        // splitText comes from voiceDirectorVersion with 4-15 word enforcement (Column 2)
+        narrativeText: enforcedChunks[idx] || voiceText || scene.narrativeText,
         frames: scene.frames.map(frame => ({
           ...frame,
-          splitText: [enforcedChunks[idx] || scene.narrativeText]
+          splitText: [enforcedChunks[idx] || voiceText || scene.narrativeText]
         }))
       }));
 
@@ -813,21 +855,27 @@ const App: React.FC = () => {
         ...prev,
         scenes: prev.scenes.map(scene => {
             if (scene.id !== sceneId) return scene;
-            // Source for split distribution: strip sound cues from narrativeText (Column 1), keep display text intact
-            const sourceRaw = newText;
-            const sourceText = sourceRaw.replace(/\[[\s\w]+\]/g, '').trim();
-            const words = sourceText.split(/\s+/).filter(w => w);
 
-            // Calculate number of scenes: ~10 words per scene, min 1
-            const targetPartsCount = Math.max(1, Math.ceil(words.length / 10));
+            // Strip sound cues from edited text (Column 1)
+            const sourceText = newText.replace(/\[[\s\w]+\]/g, '').trim();
 
-            // Distribute and enforce 4-15 words per chunk
+            // Determine number of splits from frame count (set by format in handleFormatChange)
+            let targetPartsCount = scene.frames.length;
+            if (targetPartsCount === 1) {
+                const fmt = scene.frames[0]?.format || 'Single Panel';
+                if (fmt.includes('Multi') || fmt.includes('Sequence')) {
+                    const match = fmt.match(/\((\d+)\)/);
+                    targetPartsCount = match ? parseInt(match[1]) : 2;
+                }
+            }
+
+            // Distribute text into frame count chunks
             const distributed = distributeText(sourceText, targetPartsCount);
+
+            // Enforce max 15 words per chunk
             const enforcedSplitTexts = distributed.map(s => {
-                const strippedS = s.replace(/\[[\s\w]+\]/g, '').trim();
-                const sWords = strippedS.split(/\s+/).filter(w => w);
+                const sWords = s.split(/\s+/).filter(w => w);
                 if (sWords.length <= 15) return s;
-                // Split oversized chunks at natural breakpoints
                 const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
                 const allTokens = s.split(/(\s+)/);
                 const result: string[] = [];
@@ -836,19 +884,14 @@ const App: React.FC = () => {
 
                 for (let i = 0; i < allTokens.length; i++) {
                     const token = allTokens[i];
-                    if (token.match(/^\[[\s\w]+\]$/) || token.trim() === '') {
-                        current.push(token);
-                        continue;
-                    }
+                    if (token.trim() === '') { current.push(token); continue; }
                     wordCount++;
                     current.push(token);
                     const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
                     if ((isBp || wordCount >= 10) && wordCount <= 15) {
-                        const lookAhead = allTokens.slice(i + 1).join('');
-                        const hasBpAhead = breakpoints.some(bp => lookAhead.toLowerCase().includes(bp));
                         if (isBp || wordCount === 15 || i === allTokens.length - 1) {
                             const last = current[current.length - 1];
-                            if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+                            if (last && !last.endsWith('.')) {
                                 current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
                             }
                             result.push(current.join('').trim());
@@ -860,7 +903,7 @@ const App: React.FC = () => {
                 if (current.length > 0) {
                     const joined = current.join('').trim();
                     const last = current[current.length - 1] || '';
-                    if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+                    if (last && !last.endsWith('.')) {
                         result.push(joined.replace(/[,;!?]*$/, '') + '.');
                     } else {
                         result.push(joined);
@@ -869,6 +912,7 @@ const App: React.FC = () => {
                 return result.join(' ');
             });
 
+            // Update frames: each frame gets 1 splitText slot (multi/single) or multiple (sequence)
             const updatedFrames = scene.frames.map((frame, idx) => {
                 if (scene.frames.length > 1) {
                     return { ...frame, splitText: [enforcedSplitTexts[idx] || enforcedSplitTexts[enforcedSplitTexts.length - 1]] };
