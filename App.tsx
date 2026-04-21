@@ -742,10 +742,51 @@ const App: React.FC = () => {
       );
 
       // Populate splitText from voiceDirectorVersion with 4-15 word enforcement
+      // Distribute voice text across exactly scenes.length chunks, each 4-15 words
       const voiceText = state.voiceDirectorVersion.trim();
-      const enforcedChunks = voiceText
-        ? distributeText(voiceText, scenes.length).map(s => enforceTTSWordRange(s))
-        : [];
+      const distributed = voiceText ? distributeText(voiceText, scenes.length) : [];
+      const enforcedChunks = distributed.map(s => {
+        const strippedS = s.replace(/\[[\s\w]+\]/g, '').trim();
+        const sWords = strippedS.split(/\s+/).filter(w => w);
+        if (sWords.length <= 15) return s;
+        const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
+        const allTokens = s.split(/(\s+)/);
+        const result: string[] = [];
+        let current: string[] = [];
+        let wordCount = 0;
+
+        for (let i = 0; i < allTokens.length; i++) {
+          const token = allTokens[i];
+          if (token.match(/^\[[\s\w]+\]$/) || token.trim() === '') {
+            current.push(token);
+            continue;
+          }
+          wordCount++;
+          current.push(token);
+          const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
+          if ((isBp || wordCount >= 10) && wordCount <= 15) {
+            if (isBp || wordCount === 15 || i === allTokens.length - 1) {
+              const last = current[current.length - 1];
+              if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+                current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
+              }
+              result.push(current.join('').trim());
+              current = [];
+              wordCount = 0;
+            }
+          }
+        }
+        if (current.length > 0) {
+          const joined = current.join('').trim();
+          const last = current[current.length - 1] || '';
+          if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+            result.push(joined.replace(/[,;!?]*$/, '') + '.');
+          } else {
+            result.push(joined);
+          }
+        }
+        return result.join(' ');
+      });
 
       const scenesWithSplitText = scenes.map((scene, idx) => ({
         ...scene,
@@ -774,15 +815,63 @@ const App: React.FC = () => {
 
             // Source for split distribution: voiceDirectorVersion if available, else the edited text
             const sourceText = prev.voiceDirectorVersion.trim() || newText;
-            const words = sourceText.replace(/\[[\s\w]+\]/g, '').trim().split(/\s+/).filter(w => w);
+            const stripped = sourceText.replace(/\[[\s\w]+\]/g, '').trim();
+            const words = stripped.split(/\s+/).filter(w => w);
+
+            // Calculate number of scenes: ~10 words per scene, min 1
             const targetPartsCount = Math.max(1, Math.ceil(words.length / 10));
 
-            const newSplitTexts = distributeText(sourceText, targetPartsCount);
-            const enforcedSplitTexts = newSplitTexts.map(s => enforceTTSWordRange(s));
+            // Distribute and enforce 4-15 words per chunk
+            const distributed = distributeText(sourceText, targetPartsCount);
+            const enforcedSplitTexts = distributed.map(s => {
+                const strippedS = s.replace(/\[[\s\w]+\]/g, '').trim();
+                const sWords = strippedS.split(/\s+/).filter(w => w);
+                if (sWords.length <= 15) return s;
+                // Split oversized chunks at natural breakpoints
+                const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
+                const allTokens = s.split(/(\s+)/);
+                const result: string[] = [];
+                let current: string[] = [];
+                let wordCount = 0;
+
+                for (let i = 0; i < allTokens.length; i++) {
+                    const token = allTokens[i];
+                    if (token.match(/^\[[\s\w]+\]$/) || token.trim() === '') {
+                        current.push(token);
+                        continue;
+                    }
+                    wordCount++;
+                    current.push(token);
+                    const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
+                    if ((isBp || wordCount >= 10) && wordCount <= 15) {
+                        const lookAhead = allTokens.slice(i + 1).join('');
+                        const hasBpAhead = breakpoints.some(bp => lookAhead.toLowerCase().includes(bp));
+                        if (isBp || wordCount === 15 || i === allTokens.length - 1) {
+                            const last = current[current.length - 1];
+                            if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+                                current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
+                            }
+                            result.push(current.join('').trim());
+                            current = [];
+                            wordCount = 0;
+                        }
+                    }
+                }
+                if (current.length > 0) {
+                    const joined = current.join('').trim();
+                    const last = current[current.length - 1] || '';
+                    if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+                        result.push(joined.replace(/[,;!?]*$/, '') + '.');
+                    } else {
+                        result.push(joined);
+                    }
+                }
+                return result.join(' ');
+            });
 
             const updatedFrames = scene.frames.map((frame, idx) => {
                 if (scene.frames.length > 1) {
-                    return { ...frame, splitText: [enforcedSplitTexts[idx]] };
+                    return { ...frame, splitText: [enforcedSplitTexts[idx] || enforcedSplitTexts[enforcedSplitTexts.length - 1]] };
                 } else {
                     return { ...frame, splitText: enforcedSplitTexts };
                 }
