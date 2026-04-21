@@ -740,7 +740,23 @@ const App: React.FC = () => {
         state.language,
         state.geminiApiKey
       );
-      setState(prev => ({ ...prev, scenes, isAnalyzing: false }));
+
+      // Populate splitText from voiceDirectorVersion with 4-15 word enforcement
+      const voiceText = state.voiceDirectorVersion.trim();
+      const enforcedChunks = voiceText
+        ? distributeText(voiceText, scenes.length).map(s => enforceTTSWordRange(s))
+        : [];
+
+      const scenesWithSplitText = scenes.map((scene, idx) => ({
+        ...scene,
+        narrativeText: enforcedChunks[idx] || scene.narrativeText,
+        frames: scene.frames.map(frame => ({
+          ...frame,
+          splitText: [enforcedChunks[idx] || scene.narrativeText]
+        }))
+      }));
+
+      setState(prev => ({ ...prev, scenes: scenesWithSplitText, isAnalyzing: false }));
     } catch (error: any) {
       setState(prev => ({ 
         ...prev, 
@@ -756,33 +772,26 @@ const App: React.FC = () => {
         scenes: prev.scenes.map(scene => {
             if (scene.id !== sceneId) return scene;
 
-            let partsCount = 1;
-            if (scene.frames.length > 1) {
-                partsCount = scene.frames.length;
-            } else {
-                const fmt = scene.frames[0].format;
-                if (fmt.includes("Multi") || fmt.includes("Sequence")) {
-                    const match = fmt.match(/\((\d+)\)/);
-                    partsCount = match ? parseInt(match[1]) : 2;
-                    // Fallback if regex fails but keyword exists
-                    if (!match) partsCount = 2;
-                }
-            }
+            // Source for split distribution: voiceDirectorVersion if available, else the edited text
+            const sourceText = prev.voiceDirectorVersion.trim() || newText;
+            const words = sourceText.replace(/\[[\s\w]+\]/g, '').trim().split(/\s+/).filter(w => w);
+            const targetPartsCount = Math.max(1, Math.ceil(words.length / 10));
 
-            const newSplitTexts = distributeText(newText, partsCount);
+            const newSplitTexts = distributeText(sourceText, targetPartsCount);
+            const enforcedSplitTexts = newSplitTexts.map(s => enforceTTSWordRange(s));
 
             const updatedFrames = scene.frames.map((frame, idx) => {
                 if (scene.frames.length > 1) {
-                    return { ...frame, splitText: [newSplitTexts[idx]] };
+                    return { ...frame, splitText: [enforcedSplitTexts[idx]] };
                 } else {
-                    return { ...frame, splitText: newSplitTexts };
+                    return { ...frame, splitText: enforcedSplitTexts };
                 }
             });
 
-            return { 
-                ...scene, 
-                narrativeText: newText, 
-                frames: updatedFrames 
+            return {
+                ...scene,
+                narrativeText: newText,
+                frames: updatedFrames
             };
         })
     }));
