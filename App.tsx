@@ -741,53 +741,6 @@ const App: React.FC = () => {
         state.geminiApiKey
       );
 
-      // Populate splitText from voiceDirectorVersion with 4-15 word enforcement
-      // Strip sound cues from voiceText before using as source (keep display text intact)
-      const voiceTextRaw = state.voiceDirectorVersion.trim();
-      const voiceText = voiceTextRaw.replace(/\[[\s\w]+\]/g, '').trim();
-      const distributed = voiceText ? distributeText(voiceText, scenes.length) : [];
-      const enforcedChunks = distributed.map(s => {
-        const sWords = s.split(/\s+/).filter(w => w);
-        if (sWords.length <= 15) return s;
-        const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
-        const allTokens = s.split(/(\s+)/);
-        const result: string[] = [];
-        let current: string[] = [];
-        let wordCount = 0;
-
-        for (let i = 0; i < allTokens.length; i++) {
-          const token = allTokens[i];
-          if (token.trim() === '') {
-            current.push(token);
-            continue;
-          }
-          wordCount++;
-          current.push(token);
-          const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
-          if ((isBp || wordCount >= 10) && wordCount <= 15) {
-            if (isBp || wordCount === 15 || i === allTokens.length - 1) {
-              const last = current[current.length - 1];
-              if (last && !last.endsWith('.')) {
-                current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
-              }
-              result.push(current.join('').trim());
-              current = [];
-              wordCount = 0;
-            }
-          }
-        }
-        if (current.length > 0) {
-          const joined = current.join('').trim();
-          const last = current[current.length - 1] || '';
-          if (last && !last.endsWith('.')) {
-            result.push(joined.replace(/[,;!?]*$/, '') + '.');
-          } else {
-            result.push(joined);
-          }
-        }
-        return result.join(' ');
-      });
-
       // Column 1: narrativeText = voiceDirectorVersion stripped of sound cues, per-scene chunk
       // Column 2: splitText = sub-distribution from Column 1 of the SAME scene (not cross-scene)
       const voiceText = state.voiceDirectorVersion.trim().replace(/\[[\s\w]+\]/g, '').trim();
