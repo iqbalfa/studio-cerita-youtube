@@ -808,39 +808,34 @@ export const transformToVoiceDirector = async (
 ): Promise<string> => {
   const ai = getClient(manualApiKey);
 
-  // Step 1: Split into sentences (keep delimiters)
-  const sentenceDelimiters = /(?<=[.!?])\s+/;
-  const rawSentences = text.split(sentenceDelimiters).filter(s => s.trim());
-  
-  // Step 2: Build per-sentence transformation requests
-  const sentencePromises = rawSentences.map(async (sentence) => {
-    const cleanSentence = sentence.trim();
-    if (!cleanSentence) return '';
+  const response = await ai.models.generateContent({
+    model: "gemini-3.1-flash-lite-preview",
+    contents: text,
+    config: {
+      systemInstruction: `Kamu adalah Voice Director untuk narasi voice-over.
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
-      contents: cleanSentence,
-      config: {
-        systemInstruction: `Kamu adalah Voice Director. Tugasmu HANYA 2:
-1. Sisipkan [sound cue] sebelum kata yang perlu ditekankan. Format: [nama_cue] spasi kata. Contoh: "masalahnya [deadpan] GILA"
-2. Optionally kapitalkan kata yang di-emphasis.
+TUGAS HANYA 2:
+1. Tambahkan [sound cue] sebelum kata/frasa yang perlu ditekankan.
+2. Jika kalimat panjang (>15 kata) tanpa jeda koma sama sekali, tambahkan koma di tempat natural.
 
-ATURAN WAJIB:
-- JANGAN ubah struktur kalimat. Titik, koma, tanda baca ASUALNYA.
-- JANGAN tambah titik baru, JANGAN split kalimat.
-- JANGAN ubah kata-kata di luar emphasis.
+FORMAT SOUND CUE: [nama_cue] spasi kata_yang_ditekankan
+Contoh: "masalahnya [deadpan] GILA"
 
-SOUND CUES: [whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s]
-HINDARI sound cue di akhir kalimat.`,
-        temperature: 0.3,
-      },
-    });
+DAFTAR SOUND CUES: [whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s]
 
-    return response.text?.trim() || cleanSentence;
+ATURAN:
+- JANGAN tambah titik. Titik yang ada di naskah asli Biarkan seperti asli.
+- JANGAN split kalimat menjadi dua.
+- JANGAN ubah kata-kata di luar sound cue dan kapitalisasi emphasis.
+- HINDARI sound cue di akhir kalimat.
+- Sound cue + kata langsung gabung, pisahkan dengan spasi. Contoh: "[deadpan] GILA"
+
+Output: Kembalikan naskah yang sudah disisipkan sound cue, tanpa pengantar.`,
+      temperature: 0.4,
+    },
   });
 
-  const transformedSentences = await Promise.all(sentencePromises);
-  return transformedSentences.join(' ');
+  return response.text || text;
 };
 
 /**
