@@ -808,44 +808,39 @@ export const transformToVoiceDirector = async (
 ): Promise<string> => {
   const ai = getClient(manualApiKey);
 
-  const systemInstruction = `Peran: Kamu adalah seorang Voice Director yang menambahkan sound cues ke naskah narasi.
+  // Step 1: Split into sentences (keep delimiters)
+  const sentenceDelimiters = /(?<=[.!?])\s+/;
+  const rawSentences = text.split(sentenceDelimiters).filter(s => s.trim());
+  
+  // Step 2: Build per-sentence transformation requests
+  const sentencePromises = rawSentences.map(async (sentence) => {
+    const cleanSentence = sentence.trim();
+    if (!cleanSentence) return '';
 
-ATURAN PENTING - JANGAN UBAH STRUKTUR KALIMAT:
-- KEEP the original punctuation as-is. DO NOT add, remove, or change periods, commas, or any punctuation.
-- DO NOT split or rephrase sentences. Keep them exactly as they appear in the original.
-- Your ONLY job: insert sound cues before specific words/phrases, and optionally capitalize words for emphasis.
-- If the original text has a period, it STAYS. If it has no period, do NOT add one.
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite-preview",
+      contents: cleanSentence,
+      config: {
+        systemInstruction: `Kamu adalah Voice Director. Tugasmu HANYA 2:
+1. Sisipkan [sound cue] sebelum kata yang perlu ditekankan. Format: [nama_cue] spasi kata. Contoh: "masalahnya [deadpan] GILA"
+2. Optionally kapitalkan kata yang di-emphasis.
 
-SOUND CUES (use only from this list):
-[whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s]
+ATURAN WAJIB:
+- JANGAN ubah struktur kalimat. Titik, koma, tanda baca ASUALNYA.
+- JANGAN tambah titik baru, JANGAN split kalimat.
+- JANGAN ubah kata-kata di luar emphasis.
 
-ATURAN PENGGUNAAN SOUND CUE:
-- Sisipkan TEPAT SEBELUM kata/frasa yang perlu ditekankan.
-- Contoh: "masalah utamanya adalah inflasi yang makin [deadpan] GILA." (sound cue + kapital)
-- Contoh: "[pause 1s] lo bakal selamanya jadi [soft] SAPI PERAH" (pause + sound cue + kapital)
-- DO NOT place sound cues at the very end of the script.
-- Sound cue should be followed by the word/phrase it modifies, separated by a space.
-- Capitalization: Only capitalize the SPECIFIC word(s) being emphasized, not entire sentences.
+SOUND CUES: [whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s]
+HINDARI sound cue di akhir kalimat.`,
+        temperature: 0.3,
+      },
+    });
 
-CONTOH transformasi:
-Input: "Masalah utamanya adalah inflasi yang makin gila."
-Output: "Masalah utamanya adalah inflasi yang makin [deadpan] GILA."
-
-Input: "Mereka bakal langsung amnesia massal dan pindah nyari inang baru."
-Output: "Mereka bakal langsung amnesia massal dan [chuckle] pindah nyari inang baru."
-
-Output: Berikan HANYA hasil naskah yang sudah dimodifikasi, tanpa pengantar atau penjelasan.`;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite-preview",
-    contents: text,
-    config: {
-      systemInstruction,
-      temperature: 0.7,
-    },
+    return response.text?.trim() || cleanSentence;
   });
 
-  return response.text || text;
+  const transformedSentences = await Promise.all(sentencePromises);
+  return transformedSentences.join(' ');
 };
 
 /**
