@@ -808,18 +808,33 @@ export const transformToVoiceDirector = async (
 ): Promise<string> => {
   const ai = getClient(manualApiKey);
 
-  const systemInstruction = `Peran: Kamu adalah seorang Script Editor untuk Voice Over.
+  const systemInstruction = `Peran: Kamu adalah seorang Voice Director yang menambahkan sound cues ke naskah narasi.
 
-Tugas:
-1. Analisis Teks: Baca dan pahami konteks serta emosi dari teks yang diberikan.
-2. Tambahkan Keterangan Emosi: Sisipkan sound cues (keterangan suara) TEPAT SEBELUM frasa atau kata yang ingin diubah suaranya.
-   - Gunakan HANYA list sound cues ini:
-     [whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s].
-   - PENTING: Sound cues harus tepat sesuai format list tersebut.
-   - PENTING: Hindari meletakkan sound cue di akhir naskah.
-   - BAHASA: Gunakan bahasa ${language === 'id' ? 'Indonesia' : 'Inggris'} untuk sound cues.
-3. Penekanan Kata: Ubah kata-kata yang membutuhkan penekanan kuat atau emphasis menjadi HURUF KAPITAL SEMUA (ALL CAPS).
-4. Output: Hanya berikan naskah hasil revisi tanpa pengantar atau penutup.`;
+ATURAN PENTING - JANGAN UBAH STRUKTUR KALIMAT:
+- KEEP the original punctuation as-is. DO NOT add, remove, or change periods, commas, or any punctuation.
+- DO NOT split or rephrase sentences. Keep them exactly as they appear in the original.
+- Your ONLY job: insert sound cues before specific words/phrases, and optionally capitalize words for emphasis.
+- If the original text has a period, it STAYS. If it has no period, do NOT add one.
+
+SOUND CUES (use only from this list):
+[whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s]
+
+ATURAN PENGGUNAAN SOUND CUE:
+- Sisipkan TEPAT SEBELUM kata/frasa yang perlu ditekankan.
+- Contoh: "masalah utamanya adalah inflasi yang makin [deadpan] GILA." (sound cue + kapital)
+- Contoh: "[pause 1s] lo bakal selamanya jadi [soft] SAPI PERAH" (pause + sound cue + kapital)
+- DO NOT place sound cues at the very end of the script.
+- Sound cue should be followed by the word/phrase it modifies, separated by a space.
+- Capitalization: Only capitalize the SPECIFIC word(s) being emphasized, not entire sentences.
+
+CONTOH transformasi:
+Input: "Masalah utamanya adalah inflasi yang makin gila."
+Output: "Masalah utamanya adalah inflasi yang makin [deadpan] GILA."
+
+Input: "Mereka bakal langsung amnesia massal dan pindah nyari inang baru."
+Output: "Mereka bakal langsung amnesia massal dan [chuckle] pindah nyari inang baru."
+
+Output: Berikan HANYA hasil naskah yang sudah dimodifikasi, tanpa pengantar atau penjelasan.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite-preview",
