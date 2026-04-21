@@ -742,12 +742,12 @@ const App: React.FC = () => {
       );
 
       // Populate splitText from voiceDirectorVersion with 4-15 word enforcement
-      // Distribute voice text across exactly scenes.length chunks, each 4-15 words
-      const voiceText = state.voiceDirectorVersion.trim();
+      // Strip sound cues from voiceText before using as source (keep display text intact)
+      const voiceTextRaw = state.voiceDirectorVersion.trim();
+      const voiceText = voiceTextRaw.replace(/\[[\s\w]+\]/g, '').trim();
       const distributed = voiceText ? distributeText(voiceText, scenes.length) : [];
       const enforcedChunks = distributed.map(s => {
-        const strippedS = s.replace(/\[[\s\w]+\]/g, '').trim();
-        const sWords = strippedS.split(/\s+/).filter(w => w);
+        const sWords = s.split(/\s+/).filter(w => w);
         if (sWords.length <= 15) return s;
         const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
         const allTokens = s.split(/(\s+)/);
@@ -757,7 +757,7 @@ const App: React.FC = () => {
 
         for (let i = 0; i < allTokens.length; i++) {
           const token = allTokens[i];
-          if (token.match(/^\[[\s\w]+\]$/) || token.trim() === '') {
+          if (token.trim() === '') {
             current.push(token);
             continue;
           }
@@ -767,7 +767,7 @@ const App: React.FC = () => {
           if ((isBp || wordCount >= 10) && wordCount <= 15) {
             if (isBp || wordCount === 15 || i === allTokens.length - 1) {
               const last = current[current.length - 1];
-              if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+              if (last && !last.endsWith('.')) {
                 current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
               }
               result.push(current.join('').trim());
@@ -779,7 +779,7 @@ const App: React.FC = () => {
         if (current.length > 0) {
           const joined = current.join('').trim();
           const last = current[current.length - 1] || '';
-          if (last && !last.endsWith('.') && !last.match(/^\[[\s\w]+\]$/)) {
+          if (last && !last.endsWith('.')) {
             result.push(joined.replace(/[,;!?]*$/, '') + '.');
           } else {
             result.push(joined);
@@ -812,11 +812,10 @@ const App: React.FC = () => {
         ...prev,
         scenes: prev.scenes.map(scene => {
             if (scene.id !== sceneId) return scene;
-
-            // Source for split distribution: voiceDirectorVersion if available, else the edited text
-            const sourceText = prev.voiceDirectorVersion.trim() || newText;
-            const stripped = sourceText.replace(/\[[\s\w]+\]/g, '').trim();
-            const words = stripped.split(/\s+/).filter(w => w);
+            // Source for split distribution: strip sound cues from voiceDirectorVersion, keep display text intact
+            const sourceRaw = prev.voiceDirectorVersion.trim() || newText;
+            const sourceText = sourceRaw.replace(/\[[\s\w]+\]/g, '').trim();
+            const words = sourceText.split(/\s+/).filter(w => w);
 
             // Calculate number of scenes: ~10 words per scene, min 1
             const targetPartsCount = Math.max(1, Math.ceil(words.length / 10));
