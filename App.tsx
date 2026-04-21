@@ -1320,7 +1320,7 @@ const App: React.FC = () => {
     <Layout
       activeTab={activeTab}
       onTabChange={setActiveTab}
-      isLoading={state.isAnalyzing || isTransformingVoice || isGeneratingTTS || state.isDetectingCharacters || isGeneratingAll}
+      isLoading={state.isAnalyzing || isTransformingVoice || state.isDetectingCharacters || isGeneratingAll}
       language={state.language}
       onLanguageChange={(lang) => setState(p => ({...p, language: lang}))}
       onSaveProject={handleSaveProject}
