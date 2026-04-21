@@ -788,11 +788,12 @@ const App: React.FC = () => {
         return result.join(' ');
       });
 
-      // Column 1: narrativeText = voiceDirectorVersion stripped of sound cues (master text)
+      // Column 1: narrativeText = voiceDirectorVersion stripped of sound cues, per-scene chunk
+      // Column 2: splitText = sub-distribution from Column 1 of the SAME scene (not cross-scene)
       const voiceText = state.voiceDirectorVersion.trim().replace(/\[[\s\w]+\]/g, '').trim();
-      // Column 2: splitText distributed from Column 1 based on frame count, max 15 words per chunk
       const distributed = voiceText ? distributeText(voiceText, scenes.length) : [];
-      const enforcedChunks = distributed.map(s => {
+
+      const enforceChunk = (s: string): string => {
         const sWords = s.split(/\s+/).filter(w => w);
         if (sWords.length <= 15) return s;
         const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
@@ -829,16 +830,25 @@ const App: React.FC = () => {
           }
         }
         return result.join(' ');
-      });
+      };
 
-      const scenesWithSplitText = scenes.map((scene, idx) => ({
-        ...scene,
-        narrativeText: enforcedChunks[idx] || voiceText || scene.narrativeText,
-        frames: scene.frames.map(frame => ({
-          ...frame,
-          splitText: [enforcedChunks[idx] || voiceText || scene.narrativeText]
-        }))
-      }));
+      const scenesWithSplitText = scenes.map((scene, idx) => {
+        // Column 1 = its own distributed chunk (enforced ~15 words)
+        const sceneText = distributed[idx] || scene.narrativeText;
+        const enforcedText = enforceChunk(sceneText);
+
+        // Column 2 = sub-distribution of ITS OWN Column 1 text into its own frames
+        const subDistributed = distributeText(enforcedText, scene.frames.length);
+
+        return {
+          ...scene,
+          narrativeText: enforcedText,
+          frames: scene.frames.map((frame, frameIdx) => ({
+            ...frame,
+            splitText: [subDistributed[frameIdx] || subDistributed[0] || enforcedText]
+          }))
+        };
+      });
 
       setState(prev => ({ ...prev, scenes: scenesWithSplitText, isAnalyzing: false }));
     } catch (error: any) {
