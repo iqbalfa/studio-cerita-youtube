@@ -790,7 +790,8 @@ const App: React.FC = () => {
 
       const scenesWithSplitText = scenes.map((scene, idx) => ({
         ...scene,
-        narrativeText: enforcedChunks[idx] || scene.narrativeText,
+        // narrativeText stays as AI-generated narrative (Column 1)
+        // splitText comes from voiceDirectorVersion with 4-15 word enforcement (Column 2)
         frames: scene.frames.map(frame => ({
           ...frame,
           splitText: [enforcedChunks[idx] || scene.narrativeText]
@@ -812,8 +813,8 @@ const App: React.FC = () => {
         ...prev,
         scenes: prev.scenes.map(scene => {
             if (scene.id !== sceneId) return scene;
-            // Source for split distribution: strip sound cues from voiceDirectorVersion, keep display text intact
-            const sourceRaw = prev.voiceDirectorVersion.trim() || newText;
+            // Source for split distribution: strip sound cues from narrativeText (Column 1), keep display text intact
+            const sourceRaw = newText;
             const sourceText = sourceRaw.replace(/\[[\s\w]+\]/g, '').trim();
             const words = sourceText.split(/\s+/).filter(w => w);
 
