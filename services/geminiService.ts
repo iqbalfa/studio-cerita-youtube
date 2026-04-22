@@ -812,30 +812,30 @@ export const transformToVoiceDirector = async (
     model: "gemini-3.1-flash-lite-preview",
     contents: text,
     config: {
-      systemInstruction: `Kamu adalah Voice Director untuk narasi voice-over.
-
-TUGAS HANYA 2:
-1. Tambahkan [sound cue] sebelum kata/frasa yang perlu ditekankan.
-2. Jika kalimat panjang (>15 kata) tanpa jeda koma sama sekali, tambahkan koma di tempat natural.
-
-FORMAT SOUND CUE: [nama_cue] spasi kata_yang_ditekankan
-Contoh: "masalahnya [deadpan] GILA"
+      systemInstruction: `Kamu adalah Voice Director. Sisipkan [sound cue] sebelum kata yang ingin ditekankan.
+Contoh: "[deadpan] GILA" atau "masalahnya [smile/voice] gila"
 
 DAFTAR SOUND CUES: [whisper], [sigh], [chuckle], [laugh], [hesitate], [deadpan], [emphasize], [questioning], [trembling], [soft], [excited], [smile/voice], [pause 0.5s], [pause 1s], [pause 2s], [pause 3s]
 
 ATURAN:
-- JANGAN tambah titik. Titik yang ada di naskah asli Biarkan seperti asli.
-- JANGAN split kalimat menjadi dua.
-- JANGAN ubah kata-kata di luar sound cue dan kapitalisasi emphasis.
+- JANGAN ubah struktur, kata-kata, atau tanda baca apapun selain menyisipkan sound cue.
+- Sound cue + kata langsung gabung dengan spasi. Contoh: "[deadpan] GILA"
 - HINDARI sound cue di akhir kalimat.
-- Sound cue + kata langsung gabung, pisahkan dengan spasi. Contoh: "[deadpan] GILA"
 
-Output: Kembalikan naskah yang sudah disisipkan sound cue, tanpa pengantar.`,
-      temperature: 0.4,
+Output: Naskah yang sudah disisipkan sound cue, TANPA mengubah struktur asli.`,
+      temperature: 0.3,
     },
   });
 
-  return response.text || text;
+  let result = response.text || text;
+
+  // FIX: model cenderung menyisipkan period di tengah kalimat.
+  // Strip period yang diikuti huruf kecil + spasi (mid-sentence insertion).
+  // Example: "tapi. entah" -> "tapi entah"
+  // Keep period yang diikuti huruf besar (end-of-sentence): "gila. Harga" stays.
+  result = result.replace(/\.([a-z])/gi, '$1');
+
+  return result;
 };
 
 /**
