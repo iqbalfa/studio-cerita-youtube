@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { AppState, DEFAULT_SYSTEM_PROMPT, ReferenceImage, StoryScene, LLMProvider, ILMU_LIDI_STYLE, ILMU_SURVIVAL_STYLE, ILMU_NYANTUY_STYLE, ILMU_PSIKOLOGI_STYLE } from './types/types';
 import { Layout, TabId } from './components/Layout';
 import FileUpload from './components/FileUpload';

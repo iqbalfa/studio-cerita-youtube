@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import React from 'react';
 import { AppState } from '../types/types';
 import StoryTable from './StoryTable';
