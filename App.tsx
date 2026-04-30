@@ -1,17 +1,33 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AppState, DEFAULT_SYSTEM_PROMPT, ReferenceImage, StoryScene, LLMProvider, ILMU_LIDI_STYLE, ILMU_SURVIVAL_STYLE, ILMU_NYANTUY_STYLE, ILMU_PSIKOLOGI_STYLE } from './types/types';
-import { Layout, TabId } from './components/Layout';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Save, 
+  Upload, 
+  Sparkles, 
+  AlertCircle, 
+  Settings, 
+  Image as ImageIcon, 
+  Layout, 
+  Plus, 
+  Trash2, 
+  ChevronRight,
+  Monitor,
+  Cpu,
+  Zap,
+  CheckCircle2,
+  Info,
+  RefreshCw,
+  Volume2,
+  Play,
+  Download,
+  ChevronDown,
+  X
+} from 'lucide-react';
+import { AppState, DEFAULT_SYSTEM_PROMPT, ReferenceImage, StoryScene, LLMProvider, ILMU_LIDI_STYLE, ILMU_SURVIVAL_STYLE, ILMU_NYANTUY_STYLE } from './types';
 import FileUpload from './components/FileUpload';
 import StoryTable from './components/StoryTable';
-import StoryTab from './components/StoryTab';
-import VoiceTab from './components/VoiceTab';
-import StoryboardTab from './components/StoryboardTab';
 import AudioPlayer from './components/AudioPlayer';
-import { Icons } from './utils/icons';
-import { distributeItems, distributeText, enforceTTSWordRange } from './utils/textUtils';
-import { createAudioBlob } from './utils/audioUtils';
-import { TRANSLATIONS } from './i18n/translations';
+import TabButton from './components/TabButton';
 import { 
   analyzeNarrativeToScenes, 
   generateSceneImage, 
@@ -19,36 +35,251 @@ import {
   generatePromptsFromFrames,
   detectCharactersFromNarrative,
   generateCharacterPrompt,
+  transformToVoiceDirector,
   generateTTS
 } from './services/geminiService';
 
-// New structured TTS presets for Gemini 3.1 Flash TTS
-// Each preset has: speakerProfile, scene, directorNotes
-const TTS_PRESETS: Record<string, {
-  speakerProfile: string;
-  scene: string;
-  directorNotes: string;
-}> = {
-  'Ilmu Lidi': {
-    speakerProfile: "A 20-something Indonesian guy doing YouTube narration. Internal monologue is permanently amused — he narrates facts while internally going 'bro, that's insane', 'are you serious', 'nah no way'. The contrast between his calm delivery and absurd content is what makes it funny. Uses casual 'gue/gua' style. Treats subscribers like close friends.",
-    scene: "Recording in a home studio setup. You can hear the mic and the energy of someone who's been editing all day.",
-    directorNotes: "TEMPO: Normal speed throughout the entire paragraph. Do not speed up, do not slow down. PITCH: Neutral and consistent from start to finish. Do not go higher, do not go lower. Deliver each sentence at the same steady pace. The humor comes from what you say and the personality in your words, not from vocal variation."
+// Helper to distribute items into buckets
+const distributeItems = (items: string[], count: number, separator: string): string[] => {
+    const result: string[] = new Array(count).fill("");
+    const base = Math.floor(items.length / count);
+    const extra = items.length % count;
+    let current = 0;
+    
+    for (let i = 0; i < count; i++) {
+        const take = base + (i < extra ? 1 : 0);
+        const slice = items.slice(current, current + take);
+        result[i] = slice.join(separator);
+        current += take;
+    }
+    return result;
+};
+
+// Robust text distributor that falls back from Sentences -> Clauses -> Words
+const distributeText = (text: string, count: number): string[] => {
+    if (count <= 1) return [text];
+    const cleanText = text.trim();
+    if (!cleanText) return new Array(count).fill("");
+
+    // Strategy 1: Split by Sentences
+    const sentenceRegex = /[^.!?\n]+[.!?]+|[^.!?\n]+$/g;
+    const sentences = cleanText.match(sentenceRegex)?.map(s => s.trim()).filter(s => s) || [cleanText];
+    
+    if (sentences.length >= count) {
+        return distributeItems(sentences, count, " ");
+    }
+
+    // Strategy 2: Split by Clauses (Commas, Semicolons, Uppercase transitions)
+    const clauseParts = cleanText.split(/([,;])/);
+    const clauses: string[] = [];
+    
+    for (let i = 0; i < clauseParts.length; i += 2) {
+        const part = clauseParts[i];
+        const delim = clauseParts[i + 1] || "";
+        const combined = (part + delim).trim();
+        if (combined) {
+            clauses.push(combined);
+        }
+    }
+    
+    if (clauses.length >= count) {
+        return distributeItems(clauses, count, " ");
+    }
+
+    // Strategy 3: Split by Words (Fallback)
+    const words = cleanText.split(/\s+/);
+    return distributeItems(words, count, " ");
+};
+
+const TRANSLATIONS: Record<'id' | 'en', any> = {
+  id: {
+    configTitle: "Konfigurasi Produksi",
+    textModel: "Text Model Provider",
+    narratorName: "Nama Narator (Channel)",
+    narratorSuffix: "Narrator Suffix",
+    narratorSuffixPlaceholder: "Contoh: Mengenakan baju merah bertuliskan \"Ilmu Survival\"",
+    narratorPlaceholder: "Contoh: Norman, Ilmu Lidi, dll",
+    styleSuffix: "Visual Style Suffix",
+    stylePlaceholder: "Masukkan prompt style suffix di sini...",
+    easterEgg: "Easter Egg Configuration",
+    negativePrompt: "Negative Prompt Keywords",
+    negativePlaceholder: "Contoh: blur, distorted, low quality, batik, monas...",
+    negativeHint: "Pisahkan dengan koma. Kata-kata ini akan dikecualikan saat pembuatan gambar.",
+    contextNarrative: "1. Konteks Narasi (Lengkap)",
+    contextPlaceholder: "Tempelkan cerita lengkap untuk konteks yang lebih baik...",
+    refImages: "2. Referensi Gambar (1-10 Karakter)",
+    targetParagraph: "3. Paragraf Target Visual",
+    targetPlaceholder: "Paste paragraf spesifik yang ingin divisualisasikan menjadi storyboard...",
+    analyzeBtn: "Buat Storyboard",
+    analyzing: "Sedang Menganalisis...",
+    resultTitle: "Visual Storyboard Result",
+    systemReady: "System Ready",
+    totalScenes: "Total Scenes",
+    saveProject: "Simpan Proyek",
+    loadProject: "Buka Proyek",
+    aiEngine: "AI Engine",
+    geminiKey: "Custom Gemini API Key",
+    connectKey: "Masukkan API Key",
+    keyConnected: "API Key Tersimpan",
+    billingInfo: "Informasi Billing",
+    nvidiaKey: "Nvidia API Key",
+    sumopodKey: "SumoPod API Key",
+    alertTarget: "Mohon isi Paragraf Target yang akan divisualisasikan.",
+    alertNvidia: "Mohon masukkan Nvidia API Key.",
+    alertSumopod: "Mohon masukkan SumoPod API Key.",
+    noChar: "Tidak ada karakter spesifik",
+    generateCharBtn: "Generate Karakter",
+    generatingChar: "Mendeteksi Karakter...",
+    generateCharImg: "Generate Gambar",
+    newSceneText: "Tulis narasi baru di sini...",
+    confirmDelete: "Apakah anda yakin ingin menghapus baris ini?",
+    uploadBtn: "Upload",
+    addCharBtn: "Tambah Karakter",
+    charName: "Nama Karakter",
+    charPrompt: "Prompt Visual",
+    charImage: "Gambar Karakter",
+    maxImages: "Maks 10 gambar",
+    filled: "Terisi",
+    charNamePlaceholder: "Nama Karakter",
+    charPromptPlaceholder: "Prompt visual...",
+    refinePlaceholder: "Instruksi revisi...",
+    refinePrompt: "Revisi Prompt",
+    uploadHint: "Upload 1-10 karakter. Gunakan 'Global Refs' untuk mengunggah referensi visual (max 2) yang akan digunakan untuk semua karakter.",
+    voiceDirectorBtn: "Ubah ke Versi Voice Director",
+    voiceDirectorLoading: "Mengolah Naskah...",
+    voiceDirectorTitle: "4. Versi Voice Director",
+    voiceDirectorPlaceholder: "Hasil naskah dengan sound cues akan muncul di sini...",
+    generateTTS: "Generate TTS",
+    generatingTTS: "Generating TTS...",
+    ttsModel: "Pilih Model TTS",
+    ttsVoice: "Pilih Suara",
+    ttsCopies: "Jumlah Copy",
+    ttsPreset: "Preset Instruksi",
+    ttsCustom: "Instruksi Kustom"
   },
-  'Ilmu Survival': {
-    speakerProfile: "A tough, experienced survival expert in his 30s. Voice is deep, steady, and authoritative — like someone who's been through real situations. Speaks with quiet confidence, not arrogance.",
-    scene: "Standing in a dense forest at dawn, surrounded by tall trees and morning mist. Quiet except for distant bird calls.",
-    directorNotes: "Read this paragraph with serious, grounded energy. Use dramatic pauses before critical survival tips — let tension build. When mentioning dangers, drop your pitch slightly. Sound like someone who wants to make sure you survive."
-  },
-  'Ilmu Nyantuy': {
-    speakerProfile: "A playful, witty Indonesian guy in his 20s. Voice is light, energetic, and infectious with natural comedic timing. Speaks like your funniest friend who knows when to be serious.",
-    scene: "In a casual living room, lounging on a couch, relaxed and cozy. Occasional background sounds of daily life.",
-    directorNotes: "Deliver with playful energy and deadpan humor. Use comedic timing — pause before punchlines. Mix excitement with casual sarcasm. When something's funny, let it show in your voice. Keep the vibe light but still get the point across."
-  },
-  'Ilmu Psikologi': {
-    speakerProfile: "A warm, empathetic Indonesian psychologist in her 30s. Voice is soft, clear, and genuinely caring — like someone who truly understands human struggles. Speaks with quiet confidence and real empathy.",
-    scene: "In a quiet, comfortable consultation room with soft lighting and warm tones. Peaceful and private.",
-    directorNotes: "Speak with calm, measured warmth. Slow down for complex concepts — give listeners time to absorb. Show genuine empathy, especially for sensitive topics. Use subtle upward intonation for insights. Sound like a trusted friend who's also an expert."
+  en: {
+    configTitle: "Production Configuration",
+    textModel: "Text Model Provider",
+    narratorName: "Narrator Name (Channel)",
+    narratorPlaceholder: "Example: Norman, Ilmu Lidi, etc",
+    styleSuffix: "Visual Style Suffix",
+    stylePlaceholder: "Enter style suffix prompt here...",
+    easterEgg: "Easter Egg Configuration",
+    negativePrompt: "Negative Prompt Keywords",
+    negativePlaceholder: "Example: blur, distorted, low quality, batik, monas...",
+    negativeHint: "Separate with commas. These words will be excluded during image generation.",
+    contextNarrative: "1. Narrative Context (Full)",
+    contextPlaceholder: "Paste full story for better context...",
+    refImages: "2. Reference Images (1-10 Characters)",
+    targetParagraph: "3. Visual Target Paragraph",
+    targetPlaceholder: "Paste the specific paragraph you want to visualize into a storyboard...",
+    analyzeBtn: "Generate Storyboard",
+    analyzing: "Analyzing...",
+    resultTitle: "Visual Storyboard Result",
+    systemReady: "System Ready",
+    totalScenes: "Total Scenes",
+    saveProject: "Save Project",
+    loadProject: "Load Project",
+    aiEngine: "AI Engine",
+    geminiKey: "Custom Gemini API Key",
+    connectKey: "Enter API Key",
+    keyConnected: "API Key Saved",
+    billingInfo: "Billing Info",
+    nvidiaKey: "Nvidia API Key",
+    sumopodKey: "SumoPod API Key",
+    alertTarget: "Please fill in the Target Paragraph to be visualized.",
+    alertNvidia: "Please enter Nvidia API Key.",
+    alertSumopod: "Please enter SumoPod API Key.",
+    noChar: "No specific characters",
+    generateCharBtn: "Generate Characters",
+    generatingChar: "Detecting Characters...",
+    generateCharImg: "Generate Image",
+    newSceneText: "Write new narrative here...",
+    confirmDelete: "Are you sure you want to delete this row?",
+    uploadBtn: "Upload",
+    addCharBtn: "Add Character",
+    charName: "Character Name",
+    charPrompt: "Visual Prompt",
+    charImage: "Character Image",
+    maxImages: "Max 10 images",
+    filled: "Filled",
+    charNamePlaceholder: "Character Name",
+    charPromptPlaceholder: "Visual prompt...",
+    refinePlaceholder: "Refine instruction...",
+    refinePrompt: "Refine Prompt",
+    uploadHint: "Upload 1-10 characters. Use 'Global Refs' to upload visual references (max 2) that will be used for all characters.",
+    voiceDirectorBtn: "Convert to Voice Director Version",
+    voiceDirectorLoading: "Processing Script...",
+    voiceDirectorTitle: "4. Versi Voice Director",
+    voiceDirectorPlaceholder: "Script with sound cues will appear here...",
+    generateTTS: "Generate TTS",
+    generatingTTS: "Generating TTS...",
+    ttsModel: "Select TTS Model",
+    ttsVoice: "Select Voice",
+    ttsCopies: "Copies",
+    ttsPreset: "Instruction Preset",
+    ttsCustom: "Custom Instruction"
   }
+};
+
+// Helper to convert base64 to Blob, auto-detecting format
+const createAudioBlob = (base64: string, mimeType: string): Blob => {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+
+  // Check for RIFF header (WAV)
+  if (bytes.length >= 4 && bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70) {
+    return new Blob([bytes], { type: 'audio/wav' });
+  }
+  
+  // Check for ID3 header or MP3 sync word
+  if ((bytes.length >= 3 && bytes[0] === 73 && bytes[1] === 68 && bytes[2] === 51) || 
+      (bytes.length >= 2 && bytes[0] === 255 && (bytes[1] & 224) === 224)) {
+    return new Blob([bytes], { type: 'audio/mp3' });
+  }
+
+  // Otherwise, assume it's raw PCM and wrap it in a WAV header
+  let sampleRate = 24000;
+  if (mimeType && mimeType.includes('rate=')) {
+    const match = mimeType.match(/rate=(\d+)/);
+    if (match) sampleRate = parseInt(match[1], 10);
+  }
+
+  const wavHeader = new ArrayBuffer(44);
+  const view = new DataView(wavHeader);
+  
+  const writeString = (view: DataView, offset: number, string: string) => {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
+    }
+  };
+  
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + bytes.length, true);
+  writeString(view, 8, 'WAVE');
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(view, 36, 'data');
+  view.setUint32(40, bytes.length, true);
+  
+  return new Blob([wavHeader, bytes], { type: 'audio/wav' });
+};
+
+const TTS_PRESETS: Record<string, string> = {
+  'Ilmu Lidi': "Gunakan persona Teman Cerita yang KASUAL, BERSAHABAT, dan sedikit NYELENEH. Gunakan PITCH SEDANG, tempo NORMAL yang mengalir wajar. Suara harus NATURAL DAN BERCELOTEH, seolah sedang nongkrong sambil ngopi. Beri JEDA MANUSIAWI sebelum fakta penting. Gunakan ayunan intonasi pada akhir kalimat tanya. Sampaikan materi dengan gaya akrab 'eh dengerin deh'.",
+  'Ilmu Survival': "Gunakan persona Survivor yang TANGGUH, WASPADA, namun tetap TENANG. Gunakan PITCH SEDANG-RENDAH, tempo SEDIKIT LEBIH LAMBAT dan TEGAS. Suara harus terdengar SERIUS, BERWIBAWA, dan PENGALAMAN. Beri JEDA MANUSIAWI yang cukup panjang sebelum poin krusial untuk menciptakan ketegangan. Gunakan intonasi yang datar namun penuh penekanan pada kata-kata kunci keselamatan. Sampaikan materi dengan gaya 'dengerin, ini masalah hidup dan mati'.",
+  'Ilmu Nyantuy': "Gunakan persona Teman Cerita yang KASUAL dan BERSAHABAT. PENTING: Ikuti aturan teknis berikut secara ketat: 1. Gunakan PITCH SEDANG, hindari nada melengking, hindari nada terlalu berat. 2. Gunakan TEMPO NORMAL yang mengalir wajar. Bicaralah dengan ritme orang yang sedang nongkrong dan bercerita. Jangan terburu-buru, jangan melambat. 3. Suara harus NATURAL DAN BERCELOTEH (Conversational). Tunjukkan pembawaan rileks seolah sedang menjelaskan sesuatu yang menarik sambil menikmati segelas kopi. Jangan kaku membacakan teks lurus bak penyiar berita. 4. Terapkan JEDA MANUSIAWI. Beri jeda sepersekian detik sebelum membeberkan fakta penting, seolah sedang berpikir memilah kata. Gunakan ayunan intonasi pada akhir kalimat tanya untuk memancing rasa penasaran. 5. Sampaikan materi psikologi dengan gaya akrab 'eh dengerin deh'. Biarkan penyampaian terasa sedikit spontan supaya pendengar merasa sedang berinteraksi dengan manusia sungguhan:",
+  'Norman': "Gunakan persona yang formal, informatif, dan sedikit kaku seperti penyiar berita. Gunakan pitch yang stabil, tempo yang teratur, dan intonasi yang datar. Hindari gaya berceloteh atau jeda yang terlalu lama. Sampaikan materi secara langsung dan objektif."
 };
 
 const App: React.FC = () => {
@@ -74,14 +305,16 @@ const App: React.FC = () => {
     isDetectingCharacters: false,
     globalSourceRefs: [],
     voiceDirectorVersion: '',
+    ttsModel: 'gemini-3.1-flash-tts-preview',
     ttsVoice: 'Iapetus',
+    ttsCopies: 1,
     ttsPreset: 'Ilmu Lidi',
-    ttsSpeakerProfile: TTS_PRESETS['Ilmu Lidi'].speakerProfile,
-    ttsScene: TTS_PRESETS['Ilmu Lidi'].scene,
-    ttsDirectorNotes: TTS_PRESETS['Ilmu Lidi'].directorNotes
+    ttsCustomInstruction: ''
   });
 
+  const [isTransformingVoice, setIsTransformingVoice] = useState(false);
   const [isGeneratingTTS, setIsGeneratingTTS] = useState(false);
+  const [ttsError, setTtsError] = useState("");
   const [generatedAudioUrls, setGeneratedAudioUrls] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'story' | 'voice' | 'storyboard'>('story');
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
@@ -89,8 +322,6 @@ const App: React.FC = () => {
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [generateAllProgress, setGenerateAllProgress] = useState("");
   const cancelGenerationRef = useRef(false);
-
-  const t = TRANSLATIONS[state.language];
 
   // Load API key from localStorage on mount
   React.useEffect(() => {
@@ -112,6 +343,8 @@ const App: React.FC = () => {
     setState(p => ({ ...p, hasApiKey: true }));
   };
 
+  const t = TRANSLATIONS[state.language];
+
   const handleContextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setState(prev => ({ ...prev, contextNarrative: e.target.value }));
   };
@@ -120,33 +353,52 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, targetParagraph: e.target.value }));
   };
 
+  const handleTransformToVoiceDirector = async () => {
+    if (!state.targetParagraph.trim()) return;
+
+    setIsTransformingVoice(true);
+    try {
+        const result = await transformToVoiceDirector(
+            state.targetParagraph,
+            state.language,
+            state.geminiApiKey
+        );
+        setState(prev => ({ ...prev, voiceDirectorVersion: result }));
+    } catch (error: any) {
+        alert("Error: " + error.message);
+    } finally {
+        setIsTransformingVoice(false);
+    }
+  };
+
   const handleGenerateTTS = async () => {
     if (!state.voiceDirectorVersion.trim()) return;
 
     setIsGeneratingTTS(true);
+    setTtsError("");
     setGeneratedAudioUrls([]);
-
+    
     try {
-        const preset = TTS_PRESETS[state.ttsPreset];
-        const speakerProfile = state.ttsPreset === 'Custom' ? state.ttsSpeakerProfile : preset.speakerProfile;
-        const scene = state.ttsPreset === 'Custom' ? state.ttsScene : preset.scene;
-        const directorNotes = state.ttsPreset === 'Custom' ? state.ttsDirectorNotes : preset.directorNotes;
+        const instruction = state.ttsPreset === 'Custom' ? state.ttsCustomInstruction : TTS_PRESETS[state.ttsPreset];
+        const urls: string[] = [];
 
-        const textToSpeak = state.voiceDirectorVersion;
-
-        const result = await generateTTS(
-            textToSpeak,
-            state.ttsVoice,
-            speakerProfile,
-            scene,
-            directorNotes,
-            state.geminiApiKey
-        );
-
-        const blob = createAudioBlob(result.data, result.mimeType);
-        setGeneratedAudioUrls([URL.createObjectURL(blob)]);
+        // Generate copies
+        for (let i = 0; i < state.ttsCopies; i++) {
+            const result = await generateTTS(
+                state.voiceDirectorVersion,
+                state.ttsModel,
+                state.ttsVoice,
+                instruction,
+                state.geminiApiKey
+            );
+            
+            const blob = createAudioBlob(result.data, result.mimeType);
+            urls.push(URL.createObjectURL(blob));
+        }
+        
+        setGeneratedAudioUrls(urls);
     } catch (error: any) {
-        alert("TTS Error: " + error.message);
+        setTtsError("TTS Error: " + error.message);
     } finally {
         setIsGeneratingTTS(false);
     }
@@ -397,70 +649,7 @@ const App: React.FC = () => {
         state.language,
         state.geminiApiKey
       );
-
-      // Column 1: narrativeText = voiceDirectorVersion stripped of sound cues, per-scene chunk
-      // Column 2: splitText = sub-distribution from Column 1 of the SAME scene (not cross-scene)
-      const voiceText = state.voiceDirectorVersion.trim().replace(/\[[\s\w]+\]/g, '').trim();
-      const distributed = voiceText ? distributeText(voiceText, scenes.length) : [];
-
-      const enforceChunk = (s: string): string => {
-        const sWords = s.split(/\s+/).filter(w => w);
-        if (sWords.length <= 15) return s;
-        const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
-        const allTokens = s.split(/(\s+)/);
-        const result: string[] = [];
-        let current: string[] = [];
-        let wordCount = 0;
-
-        for (let i = 0; i < allTokens.length; i++) {
-          const token = allTokens[i];
-          if (token.trim() === '') { current.push(token); continue; }
-          wordCount++;
-          current.push(token);
-          const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
-          if ((isBp || wordCount >= 10) && wordCount <= 15) {
-            if (isBp || wordCount === 15 || i === allTokens.length - 1) {
-              const last = current[current.length - 1];
-              if (last && !last.endsWith('.')) {
-                current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
-              }
-              result.push(current.join('').trim());
-              current = [];
-              wordCount = 0;
-            }
-          }
-        }
-        if (current.length > 0) {
-          const joined = current.join('').trim();
-          const last = current[current.length - 1] || '';
-          if (last && !last.endsWith('.')) {
-            result.push(joined.replace(/[,;!?]*$/, '') + '.');
-          } else {
-            result.push(joined);
-          }
-        }
-        return result.join(' ');
-      };
-
-      const scenesWithSplitText = scenes.map((scene, idx) => {
-        // Column 1 = its own distributed chunk (enforced ~15 words)
-        const sceneText = distributed[idx] || scene.narrativeText;
-        const enforcedText = enforceChunk(sceneText);
-
-        // Column 2 = sub-distribution of ITS OWN Column 1 text into its own frames
-        const subDistributed = distributeText(enforcedText, scene.frames.length);
-
-        return {
-          ...scene,
-          narrativeText: enforcedText,
-          frames: scene.frames.map((frame, frameIdx) => ({
-            ...frame,
-            splitText: [subDistributed[frameIdx] || subDistributed[0] || enforcedText]
-          }))
-        };
-      });
-
-      setState(prev => ({ ...prev, scenes: scenesWithSplitText, isAnalyzing: false }));
+      setState(prev => ({ ...prev, scenes, isAnalyzing: false }));
     } catch (error: any) {
       setState(prev => ({ 
         ...prev, 
@@ -476,75 +665,33 @@ const App: React.FC = () => {
         scenes: prev.scenes.map(scene => {
             if (scene.id !== sceneId) return scene;
 
-            // Strip sound cues from edited text (Column 1)
-            const sourceText = newText.replace(/\[[\s\w]+\]/g, '').trim();
-
-            // Determine number of splits from frame count (set by format in handleFormatChange)
-            let targetPartsCount = scene.frames.length;
-            if (targetPartsCount === 1) {
-                const fmt = scene.frames[0]?.format || 'Single Panel';
-                if (fmt.includes('Multi') || fmt.includes('Sequence')) {
+            let partsCount = 1;
+            if (scene.frames.length > 1) {
+                partsCount = scene.frames.length;
+            } else {
+                const fmt = scene.frames[0].format;
+                if (fmt.includes("Multi") || fmt.includes("Sequence")) {
                     const match = fmt.match(/\((\d+)\)/);
-                    targetPartsCount = match ? parseInt(match[1]) : 2;
+                    partsCount = match ? parseInt(match[1]) : 2;
+                    // Fallback if regex fails but keyword exists
+                    if (!match) partsCount = 2;
                 }
             }
 
-            // Distribute text into frame count chunks
-            const distributed = distributeText(sourceText, targetPartsCount);
+            const newSplitTexts = distributeText(newText, partsCount);
 
-            // Enforce max 15 words per chunk
-            const enforcedSplitTexts = distributed.map(s => {
-                const sWords = s.split(/\s+/).filter(w => w);
-                if (sWords.length <= 15) return s;
-                const breakpoints = [',', 'dan', 'atau', 'tetapi', 'karena', 'jadi', 'bahwa', 'jika', 'meski', 'namun', '&', '-'];
-                const allTokens = s.split(/(\s+)/);
-                const result: string[] = [];
-                let current: string[] = [];
-                let wordCount = 0;
-
-                for (let i = 0; i < allTokens.length; i++) {
-                    const token = allTokens[i];
-                    if (token.trim() === '') { current.push(token); continue; }
-                    wordCount++;
-                    current.push(token);
-                    const isBp = breakpoints.some(bp => token.toLowerCase().replace(/[.,;!?]*$/, '') === bp);
-                    if ((isBp || wordCount >= 10) && wordCount <= 15) {
-                        if (isBp || wordCount === 15 || i === allTokens.length - 1) {
-                            const last = current[current.length - 1];
-                            if (last && !last.endsWith('.')) {
-                                current[current.length - 1] = last.replace(/[,;!?]*$/, '') + '.';
-                            }
-                            result.push(current.join('').trim());
-                            current = [];
-                            wordCount = 0;
-                        }
-                    }
-                }
-                if (current.length > 0) {
-                    const joined = current.join('').trim();
-                    const last = current[current.length - 1] || '';
-                    if (last && !last.endsWith('.')) {
-                        result.push(joined.replace(/[,;!?]*$/, '') + '.');
-                    } else {
-                        result.push(joined);
-                    }
-                }
-                return result.join(' ');
-            });
-
-            // Update frames: each frame gets 1 splitText slot (multi/single) or multiple (sequence)
             const updatedFrames = scene.frames.map((frame, idx) => {
                 if (scene.frames.length > 1) {
-                    return { ...frame, splitText: [enforcedSplitTexts[idx] || enforcedSplitTexts[enforcedSplitTexts.length - 1]] };
+                    return { ...frame, splitText: [newSplitTexts[idx]] };
                 } else {
-                    return { ...frame, splitText: enforcedSplitTexts };
+                    return { ...frame, splitText: newSplitTexts };
                 }
             });
 
-            return {
-                ...scene,
-                narrativeText: newText,
-                frames: updatedFrames
+            return { 
+                ...scene, 
+                narrativeText: newText, 
+                frames: updatedFrames 
             };
         })
     }));
@@ -666,19 +813,6 @@ const App: React.FC = () => {
               state.geminiApiKey
           );
 
-          // Post-process: ensure every prompt has style suffix + easter egg
-          const validatedPrompts = prompts.map((p, i) => {
-              let fixed = p.trim();
-              if (!fixed.toLowerCase().includes("easter_egg")) {
-                  fixed += " easter_egg:心头一震 emoji";
-              }
-              // Check if prompt ENDS with styleSuffix (not just contains "white background")
-              if (!fixed.endsWith(state.styleSuffix.trim())) {
-                  fixed += " " + state.styleSuffix;
-              }
-              return fixed;
-          });
-
           setState(prev => ({
               ...prev,
               scenes: prev.scenes.map(s => s.id === sceneId ? { 
@@ -686,7 +820,7 @@ const App: React.FC = () => {
                   isGeneratingPrompts: false,
                   frames: s.frames.map((f, i) => ({
                       ...f,
-                      visualPrompt: validatedPrompts[i] || f.visualPrompt // Fallback
+                      visualPrompt: prompts[i] || f.visualPrompt // Fallback
                   }))
               } : s)
           }));
@@ -1073,141 +1207,624 @@ const App: React.FC = () => {
     reader.readAsText(file);
   }, []);
 
-  const getStatusLabel = () => {
-    if (state.stylePreset === 'Custom') return '⚠ CUSTOM STYLE';
-    return `ACTIVE: ${state.stylePreset}`;
-  };
-
   return (
-    <Layout
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      isLoading={state.isAnalyzing || state.isDetectingCharacters || isGeneratingAll}
-      language={state.language}
-      onLanguageChange={(lang) => setState(p => ({...p, language: lang}))}
-      onSaveProject={handleSaveProject}
-      onLoadProject={handleLoadProject}
-      apiKey={state.geminiApiKey}
-      onApiKeyChange={(key) => setState(p => ({...p, geminiApiKey: key}))}
-      narratorName={state.narratorName}
-      stylePreset={state.stylePreset}
-      onStylePresetChange={(val) => {
-        if (val === 'Ilmu Lidi') {
-          setState(p => ({
-            ...p,
-            narratorName: 'Ilmu Lidi',
-            stylePreset: 'Ilmu Lidi',
-            styleSuffix: ILMU_LIDI_STYLE,
-            easterEggCount: 1,
-            easterEggTypes: ['pop culture'],
-            ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Lidi',
-            ttsSpeakerProfile: TTS_PRESETS['Ilmu Lidi'].speakerProfile,
-            ttsScene: TTS_PRESETS['Ilmu Lidi'].scene,
-            ttsDirectorNotes: TTS_PRESETS['Ilmu Lidi'].directorNotes
-          }));
-        } else if (val === 'ILMU SURVIVAL') {
-          setState(p => ({
-            ...p,
-            narratorName: 'Ilmu Survival',
-            stylePreset: 'ILMU SURVIVAL',
-            styleSuffix: ILMU_SURVIVAL_STYLE,
-            easterEggCount: 2,
-            easterEggTypes: ['pop culture', 'khas indonesia'],
-            ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Survival',
-            ttsSpeakerProfile: TTS_PRESETS['Ilmu Survival'].speakerProfile,
-            ttsScene: TTS_PRESETS['Ilmu Survival'].scene,
-            ttsDirectorNotes: TTS_PRESETS['Ilmu Survival'].directorNotes
-          }));
-        } else if (val === 'ILMU NYANTUY') {
-          setState(p => ({
-            ...p,
-            narratorName: 'Ilmu Nyantuy',
-            stylePreset: 'ILMU NYANTUY',
-            styleSuffix: ILMU_NYANTUY_STYLE,
-            easterEggCount: 2,
-            easterEggTypes: ['pop culture', 'khas indonesia'],
-            ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Nyantuy',
-            ttsSpeakerProfile: TTS_PRESETS['Ilmu Nyantuy'].speakerProfile,
-            ttsScene: TTS_PRESETS['Ilmu Nyantuy'].scene,
-            ttsDirectorNotes: TTS_PRESETS['Ilmu Nyantuy'].directorNotes
-          }));
-        } else if (val === 'ILMU PSIKOLOGI') {
-          setState(p => ({
-            ...p,
-            narratorName: 'Ilmu Psikologi',
-            stylePreset: 'ILMU PSIKOLOGI',
-            styleSuffix: ILMU_PSIKOLOGI_STYLE,
-            easterEggCount: 1,
-            easterEggTypes: ['pop culture'],
-            ttsVoice: 'Iapetus',
-            ttsPreset: 'Ilmu Psikologi',
-            ttsSpeakerProfile: TTS_PRESETS['Ilmu Psikologi'].speakerProfile,
-            ttsScene: TTS_PRESETS['Ilmu Psikologi'].scene,
-            ttsDirectorNotes: TTS_PRESETS['Ilmu Psikologi'].directorNotes
-          }));
-        } else {
-          setState(p => ({ ...p, stylePreset: 'Custom' }));
-        }
-      }}
-      statusLabel={getStatusLabel()}
-    >
+    <div className="min-h-screen bg-slate-950 text-slate-200 selection:bg-blue-500/30 font-sans">
+      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3"
+          >
+             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Layout className="w-6 h-6 text-white" />
+             </div>
+             <div>
+                <h1 className="text-xl font-bold tracking-tight text-white">Visual Storyboard</h1>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Multi Channel Edition</p>
+             </div>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3"
+          >
+             <button
+                onClick={handleSaveProject}
+                className="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+             >
+                <Save className="h-4 w-4 text-blue-400" />
+                {t.saveProject}
+             </button>
+             <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition-all flex items-center gap-2 shadow-sm active:scale-95"
+             >
+                <Upload className="h-4 w-4 text-purple-400" />
+                {t.loadProject}
+             </button>
+             <input 
+                ref={fileInputRef} 
+                type="file" 
+                accept=".json" 
+                className="hidden" 
+                onChange={handleLoadProject}
+             />
+             <div className="h-8 w-px bg-slate-800 mx-2"></div>
+             <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+                <Zap className={`w-3.5 h-3.5 ${state.geminiApiKey ? 'text-blue-400' : 'text-slate-500'}`} />
+                <input 
+                    type="password"
+                    value={state.geminiApiKey}
+                    onChange={(e) => setState(p => ({ ...p, geminiApiKey: e.target.value }))}
+                    placeholder="Gemini API Key..."
+                    className="bg-transparent text-xs text-slate-200 outline-none w-24 focus:w-48 transition-all placeholder-slate-500"
+                />
+                {state.geminiApiKey ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                )}
+             </div>
+             <div className="h-8 w-px bg-slate-800 mx-2"></div>
+             <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Master Preset</span>
+                 <select 
+                    value={state.stylePreset}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Ilmu Lidi') {
+                            setState(p => ({
+                                ...p,
+                                narratorName: 'Ilmu Lidi',
+                                stylePreset: 'Ilmu Lidi',
+                                styleSuffix: ILMU_LIDI_STYLE,
+                                easterEggCount: 2,
+                                easterEggTypes: ['pop culture', 'khas indonesia'],
+                                ttsModel: 'gemini-3.1-flash-tts-preview',
+                                ttsVoice: 'Iapetus',
+                                ttsPreset: 'Ilmu Lidi'
+                            }));
+                        } else if (val === 'Ilmu Survival') {
+                            setState(p => ({
+                                ...p,
+                                narratorName: 'Ilmu Survival',
+                                stylePreset: 'ILMU SURVIVAL',
+                                styleSuffix: ILMU_SURVIVAL_STYLE,
+                                easterEggCount: 2,
+                                easterEggTypes: ['pop culture', 'khas indonesia'],
+                                ttsModel: 'gemini-3.1-flash-tts-preview',
+                                ttsVoice: 'Iapetus',
+                                ttsPreset: 'Ilmu Survival'
+                            }));
+                        } else if (val === 'Ilmu Nyantuy') {
+                            setState(p => ({
+                                ...p,
+                                narratorName: 'Ilmu Nyantuy',
+                                stylePreset: 'ILMU NYANTUY',
+                                styleSuffix: ILMU_NYANTUY_STYLE,
+                                easterEggCount: 2,
+                                easterEggTypes: ['pop culture', 'khas indonesia'],
+                                ttsModel: 'gemini-3.1-flash-tts-preview',
+                                ttsVoice: 'Iapetus',
+                                ttsPreset: 'Ilmu Nyantuy'
+                            }));
+                        } else {
+                            setState(p => ({ ...p, stylePreset: 'Custom' }));
+                        }
+                    }}
+                    className="bg-slate-800 text-xs text-slate-200 font-bold outline-none cursor-pointer px-2 py-1 rounded border border-slate-700 hover:bg-slate-700 transition-colors"
+                >
+                    <option value="Custom" className="bg-slate-900">Custom</option>
+                    <option value="Ilmu Lidi" className="bg-slate-900">Ilmu Lidi</option>
+                    <option value="Ilmu Survival" className="bg-slate-900">Ilmu Survival</option>
+                    <option value="Ilmu Nyantuy" className="bg-slate-900">Ilmu Nyantuy</option>
+                </select>
+             </div>
+             <div className="h-8 w-px bg-slate-800 mx-2"></div>
+             <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lang</span>
+                <select 
+                    value={state.language}
+                    onChange={(e) => setState(p => ({...p, language: e.target.value as 'id' | 'en'}))}
+                    className="bg-slate-800 text-xs text-slate-200 font-bold outline-none cursor-pointer px-2 py-1 rounded border border-slate-700 hover:bg-slate-700 transition-colors"
+                >
+                    <option value="id" className="bg-slate-900">ID</option>
+                    <option value="en" className="bg-slate-900">EN</option>
+                </select>
+             </div>
+             <div className="h-8 w-px bg-slate-800 mx-2"></div>
+             <div className="hidden md:flex flex-col items-end">
+               <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Version 2.20</span>
+               <span className="text-xs text-slate-300 font-medium">Last Updated: Apr 5, 2026 20:47</span>
+             </div>
+          </motion.div>
+        </div>
+      {/* Sticky Status Bar */}
+      <div className={`w-full py-2 px-6 flex items-center justify-center font-bold text-xs uppercase tracking-widest shadow-lg ${state.stylePreset === 'Custom' ? 'bg-purple-600 text-white animate-pulse' : 'bg-blue-600 text-white'}`}>
+          <span className="flex items-center gap-2">
+            {state.stylePreset === 'Custom' ? '⚠️ CUSTOM STYLE ACTIVE - MANUAL EDIT' : `ACTIVE PRESET: ${state.stylePreset}`}
+          </span>
+      </div>
+      </header>
 
-      <AnimatePresence mode="wait">
-        {activeTab === 'story' && (
-          <StoryTab 
-            state={state}
-            setState={setState}
-            t={t}
-            isAdvancedOpen={isAdvancedOpen}
-            setIsAdvancedOpen={setIsAdvancedOpen}
-            handleContextChange={handleContextChange}
-            handleGenerateCharacters={handleGenerateCharacters}
-            handleRefImagesChange={handleRefImagesChange}
-            handleGenerateCharacterImage={handleGenerateCharacterImage}
-            handleCharacterPromptChange={handleCharacterPromptChange}
-            handleGenerateCharacterPrompt={handleGenerateCharacterPrompt}
-            handleGlobalSourceRefsChange={handleGlobalSourceRefsChange}
+      <main className="max-w-[1600px] mx-auto px-6 py-8 flex flex-col">
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 mb-8">
+          <TabButton 
+            active={activeTab === 'story'} 
+            onClick={() => setActiveTab('story')} 
+            icon={<ImageIcon className="w-4 h-4" />} 
+            label="Konteks & Karakter" 
           />
-        )}
+          <TabButton 
+            active={activeTab === 'voice'} 
+            onClick={() => setActiveTab('voice')} 
+            icon={<Volume2 className="w-4 h-4" />} 
+            label="Voice & Audio" 
+          />
+          <TabButton 
+            active={activeTab === 'storyboard'} 
+            onClick={() => setActiveTab('storyboard')} 
+            icon={<Layout className="w-4 h-4" />} 
+            label="Storyboard" 
+          />
+        </div>
+
+        <AnimatePresence mode="wait">
+          {activeTab === 'story' && (
+            <motion.div 
+              key="story"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="grid grid-cols-1 md:grid-cols-12 gap-6"
+            >
+
+
+              {/* Card 4: Story Context */}
+              <div className="md:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+                      <Layout className="w-4 h-4 text-indigo-500" /> {t.contextNarrative}
+                  </h3>
+                  <textarea
+                      className="w-full flex-1 min-h-[200px] bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none placeholder-slate-600 text-slate-200 leading-relaxed custom-scrollbar"
+                      placeholder={t.contextPlaceholder}
+                      value={state.contextNarrative}
+                      onChange={handleContextChange}
+                  />
+                  <button
+                      onClick={handleGenerateCharacters}
+                      disabled={state.isDetectingCharacters}
+                      className="w-full py-3 text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                      <Sparkles className={`w-4 h-4 ${state.isDetectingCharacters ? 'animate-spin' : ''}`} />
+                      {state.isDetectingCharacters ? t.generatingChar : t.generateCharBtn}
+                  </button>
+              </div>
+
+              {/* Card 5: Character References */}
+              <div className="md:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+                      <ImageIcon className="w-4 h-4 text-emerald-500" /> {t.refImages}
+                  </h3>
+                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-1 flex-1 overflow-hidden">
+                       <FileUpload 
+                          label="" 
+                          currentImages={state.refImages} 
+                          onFilesChange={handleRefImagesChange}
+                          onGenerateImage={handleGenerateCharacterImage}
+                          onPromptChange={handleCharacterPromptChange}
+                          onGeneratePrompt={handleGenerateCharacterPrompt}
+                          globalSourceRefs={state.globalSourceRefs}
+                          onGlobalSourceRefsChange={handleGlobalSourceRefsChange}
+                          t={t}
+                       />
+                  </div>
+              </div>
+
+              {/* Advanced Settings Toggle */}
+              <div className="md:col-span-12">
+                  <button 
+                      onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+                      className="w-full flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700 hover:bg-slate-800 transition-all"
+                  >
+                      <span className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                          <Settings className="w-4 h-4" /> Advanced Settings
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isAdvancedOpen ? 'rotate-180' : ''}`} />
+                  </button>
+              </div>
+
+              <AnimatePresence>
+                  {isAdvancedOpen && (
+                      <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="md:col-span-12 grid grid-cols-1 md:grid-cols-12 gap-6"
+                      >
+                          {/* Card 2: Visual Style & Prompt */}
+                          <div className="md:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+                              <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+                                  <ImageIcon className="w-4 h-4 text-purple-500" /> Visual Style & Prompts
+                              </h3>
+                              <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                      Active Preset: <span className={state.stylePreset === 'Custom' ? 'text-purple-400' : 'text-blue-400'}>{state.stylePreset}</span>
+                                  </span>
+                                  {state.stylePreset !== 'Custom' && (
+                                      <span className="text-[10px] text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">LOCKED</span>
+                                  )}
+                              </div>
+                              <textarea 
+                                  value={state.styleSuffix}
+                                  onChange={(e) => setState(p => ({...p, styleSuffix: e.target.value, stylePreset: 'Custom'}))}
+                                  placeholder={t.stylePlaceholder}
+                                  className={`bg-slate-950 border ${state.stylePreset === 'Custom' ? 'border-purple-500/50' : 'border-slate-800'} text-slate-200 text-sm rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-full h-20 resize-none transition-all ${state.stylePreset !== 'Custom' ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                  readOnly={state.stylePreset !== 'Custom'}
+                              />
+                              <input 
+                                  type="text" 
+                                  value={state.negativePrompt}
+                                  onChange={(e) => setState(p => ({...p, negativePrompt: e.target.value}))}
+                                  placeholder={t.negativePlaceholder}
+                                  className="bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-full"
+                              />
+                          </div>
+
+                          {/* Card 3: Easter Egg */}
+                          <div className="md:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col gap-4">
+                              <div className="flex items-center justify-between mb-2">
+                                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                      <Zap className="w-4 h-4 text-amber-500" /> {t.easterEgg}
+                                  </h3>
+                                  <div className="flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
+                                      <span className="text-[10px] font-bold text-slate-500">COUNT</span>
+                                      <input 
+                                          type="number" 
+                                          min="0" 
+                                          max="5"
+                                          value={state.easterEggCount}
+                                          onChange={(e) => {
+                                              const count = Math.max(0, Math.min(5, parseInt(e.target.value) || 0));
+                                              setState(p => {
+                                                  const currentTypes = [...p.easterEggTypes];
+                                                  if (count > currentTypes.length) {
+                                                      for (let i = currentTypes.length; i < count; i++) {
+                                                          currentTypes.push('pop culture');
+                                                      }
+                                                  } else if (count < currentTypes.length) {
+                                                      currentTypes.splice(count);
+                                                  }
+                                                  return { ...p, easterEggCount: count, easterEggTypes: currentTypes };
+                                              });
+                                          }}
+                                          className="bg-transparent text-blue-400 text-sm font-bold w-8 outline-none text-center"
+                                      />
+                                  </div>
+                              </div>
+                              
+                              <AnimatePresence>
+                                  {state.easterEggCount > 0 && (
+                                      <motion.div 
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="flex flex-col gap-2 overflow-y-auto custom-scrollbar pr-1 max-h-[140px]"
+                                      >
+                                          {state.easterEggTypes.map((type, idx) => (
+                                              <motion.div 
+                                                key={idx}
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: idx * 0.05 }}
+                                                className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800"
+                                              >
+                                                  <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                                      {idx + 1}
+                                                  </div>
+                                                  <select 
+                                                      value={type}
+                                                      onChange={(e) => {
+                                                          const newTypes = [...state.easterEggTypes];
+                                                          newTypes[idx] = e.target.value;
+                                                          setState(p => ({ ...p, easterEggTypes: newTypes }));
+                                                      }}
+                                                      className="bg-transparent text-slate-200 text-xs outline-none flex-1 cursor-pointer"
+                                                  >
+                                                      <option value="pop culture" className="bg-slate-900 text-slate-200">Pop Culture</option>
+                                                      <option value="internasional" className="bg-slate-900 text-slate-200">Internasional</option>
+                                                      <option value="khas indonesia" className="bg-slate-900 text-slate-200">Khas Indonesia</option>
+                                                  </select>
+                                              </motion.div>
+                                          ))}
+                                      </motion.div>
+                                  )}
+                              </AnimatePresence>
+                          </div>
+                      </motion.div>
+                  )}
+              </AnimatePresence>
+            </motion.div>
+          )}
 
           {activeTab === 'voice' && (
-          <VoiceTab
-            state={state}
-            setState={setState}
-            t={t}
-            handleTargetChange={handleTargetChange}
-            handleGenerateTTS={handleGenerateTTS}
-            isGeneratingTTS={isGeneratingTTS}
-            generatedAudioUrls={generatedAudioUrls}
-          />
-        )}
+            <motion.div 
+              key="voice"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-col gap-8"
+            >
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl w-full"
+        >
+            <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-6">
+                <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/10 rounded-lg">
+                    <Volume2 className="h-6 w-6 text-purple-500" />
+                  </div>
+                  Voice Director & TTS
+                </h2>
+            </div>
+
+            <div className="space-y-6 flex flex-col h-full">
+                <div className="space-y-2 flex flex-col flex-1">
+                    <label className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                            <Zap className="w-3 h-3" />
+                            {t.targetParagraph}
+                        </label>
+                        <textarea
+                            className="w-full flex-1 min-h-[120px] bg-slate-900 border border-blue-500/30 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none scrollbar-thin placeholder-slate-600 text-slate-200 leading-relaxed shadow-inner"
+                            placeholder={t.targetPlaceholder}
+                            value={state.targetParagraph}
+                            onChange={handleTargetChange}
+                        />
+                        <motion.button
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            onClick={handleTransformToVoiceDirector}
+                            disabled={isTransformingVoice || !state.targetParagraph.trim()}
+                            className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-bold transition-all border
+                                ${isTransformingVoice || !state.targetParagraph.trim()
+                                    ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
+                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20 shadow-lg shadow-blue-500/5'
+                                }`}
+                        >
+                            {isTransformingVoice ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <Monitor className="w-3.5 h-3.5" />
+                            )}
+                            {isTransformingVoice ? t.voiceDirectorLoading : t.voiceDirectorBtn}
+                        </motion.button>
+                    </div>
+
+                    <div className="space-y-2 flex flex-col flex-1">
+                        <label className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2">
+                            <Monitor className="w-3 h-3" />
+                            {t.voiceDirectorTitle}
+                        </label>
+                        <textarea
+                            className="w-full flex-1 min-h-[120px] bg-slate-900 border border-purple-500/30 rounded-xl p-4 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition-all resize-none scrollbar-thin placeholder-slate-600 text-slate-200 leading-relaxed shadow-inner"
+                            placeholder={t.voiceDirectorPlaceholder}
+                            value={state.voiceDirectorVersion}
+                            onChange={(e) => setState(prev => ({ ...prev, voiceDirectorVersion: e.target.value }))}
+                        />
+
+                        {/* TTS Controls */}
+                        <div className="p-4 bg-slate-900/50 rounded-xl border border-purple-500/20 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.ttsModel}</label>
+                                    <select 
+                                        value={state.ttsModel}
+                                        onChange={(e) => setState(prev => ({ ...prev, ttsModel: e.target.value }))}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-purple-500"
+                                    >
+                                        <option value="gemini-3.1-flash-tts-preview">gemini-3.1-flash-tts-preview (recommended)</option>
+                                        <option value="gemini-2.5-pro-preview-tts">gemini-2.5-pro-preview-tts (slower/preview)</option>
+                                        <option value="gemini-2.5-flash-preview-tts">gemini-2.5-flash-preview-tts</option>
+                                    </select>
+                                    {state.ttsModel.includes('2.5-pro') && (
+                                        <p className="text-[10px] text-amber-400 leading-snug">
+                                            2.5 Pro TTS preview bisa jauh lebih lambat. Jika request melewati 120 detik, sistem akan stop dan tampilkan error, bukan loading terus.
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.ttsVoice}</label>
+                                    <select 
+                                        value={state.ttsVoice}
+                                        onChange={(e) => setState(prev => ({ ...prev, ttsVoice: e.target.value }))}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-purple-500"
+                                    >
+                                        {['Iapetus', 'Puck', 'Charon', 'Kore', 'Fenrir', 'Zephyr'].map(v => (
+                                            <option key={v} value={v}>{v}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.ttsCopies}</label>
+                                    <select 
+                                        value={state.ttsCopies}
+                                        onChange={(e) => setState(prev => ({ ...prev, ttsCopies: parseInt(e.target.value) }))}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-purple-500"
+                                    >
+                                        {[1, 2, 3, 4, 5].map(n => (
+                                            <option key={n} value={n}>{n} Copy</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.ttsPreset}</label>
+                                    <input 
+                                        type="text"
+                                        value={state.ttsPreset}
+                                        onChange={(e) => setState(prev => ({ ...prev, ttsPreset: e.target.value }))}
+                                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-purple-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.ttsCustom}</label>
+                                <textarea 
+                                    value={state.ttsPreset === 'Custom' ? state.ttsCustomInstruction : TTS_PRESETS[state.ttsPreset]}
+                                    onChange={(e) => setState(prev => ({ ...prev, ttsCustomInstruction: e.target.value, ttsPreset: 'Custom' }))}
+                                    className={`w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-purple-500 min-h-[80px] resize-none transition-all ${state.ttsPreset !== 'Custom' ? 'opacity-70' : ''}`}
+                                    placeholder="Masukkan instruksi gaya bicara kustom..."
+                                />
+                            </div>
+
+                            <div className="flex flex-wrap gap-3">
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={handleGenerateTTS}
+                                    disabled={isGeneratingTTS || !state.voiceDirectorVersion.trim()}
+                                    className={`flex items-center justify-center gap-2 py-2.5 px-6 rounded-xl text-xs font-bold transition-all shadow-lg
+                                        ${isGeneratingTTS || !state.voiceDirectorVersion.trim()
+                                            ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                            : 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-900/20'
+                                        }`}
+                                >
+                                    {isGeneratingTTS ? (
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Volume2 className="w-4 h-4" />
+                                    )}
+                                    {isGeneratingTTS ? t.generatingTTS : t.generateTTS}
+                                </motion.button>
+                                
+                                {ttsError && (
+                                    <div className="w-full mt-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-xs">
+                                        {ttsError}
+                                    </div>
+                                )}
+
+                                {generatedAudioUrls.length > 0 && (
+                                    <div className="flex flex-col gap-3 w-full mt-4">
+                                        {generatedAudioUrls.map((url, idx) => (
+                                            <AudioPlayer key={idx} url={url} index={idx} />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </motion.div>
+            </motion.div>
+          )}
 
           {activeTab === 'storyboard' && (
-          <StoryboardTab
-            state={state}
-            t={t}
-            handleAnalyzeStory={handleAnalyzeStory}
-            handleGenerateImage={handleGenerateImage}
-            handleGenerateSequence={handleGenerateSequence}
-            handleUpdatePrompt={handleUpdatePrompt}
-            handleRefinePrompt={handleRefinePrompt}
-            handleFormatChange={handleFormatChange}
-            handleSaveNarrative={handleSaveNarrative}
-            handleAddScene={handleAddScene}
-            handleDeleteScene={handleDeleteScene}
-            handleUpdateSplitText={handleUpdateSplitText}
-            handleGeneratePrompts={handleGeneratePrompts}
-            handleGenerateAllImages={handleGenerateAllImages}
-            isGeneratingAll={isGeneratingAll}
-            generateAllProgress={generateAllProgress}
-            handleCancelGenerateAll={handleCancelGenerateAll}
-          />
-        )}
+            <motion.div 
+              key="storyboard"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex flex-col gap-8"
+            >
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="w-full"
+        >
+            <div className="flex flex-col gap-4">
+                <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={handleAnalyzeStory}
+                    disabled={state.isAnalyzing || !state.targetParagraph}
+                    className={`w-full py-5 rounded-2xl font-bold text-white transition-all shadow-xl flex items-center justify-center gap-3 text-lg
+                    ${state.isAnalyzing || !state.targetParagraph
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                        : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:shadow-blue-500/25 border border-white/10'
+                    }`}
+                >
+                    {state.isAnalyzing ? (
+                        <>
+                            <motion.div 
+                              animate={{ rotate: 360 }}
+                              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                              className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white"
+                            />
+                            {t.analyzing}
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="w-6 h-6" />
+                            {t.analyzeBtn}
+                        </>
+                    )}
+                </motion.button>
+
+                {state.analysisError && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-red-900/20 border border-red-800/50 rounded-xl text-sm text-red-400 flex items-start gap-3"
+                    >
+                        <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                        <p>{state.analysisError}</p>
+                    </motion.div>
+                )}
+            </div>
+        </motion.div>
+
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl min-h-[600px] w-full"
+        >
+             <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-6">
+                <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/10 rounded-lg">
+                    <Layout className="h-6 w-6 text-purple-500" />
+                  </div>
+                  {t.resultTitle}
+                </h2>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-950 rounded-full border border-slate-800">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{t.totalScenes}</span>
+                        <span className="text-xs font-bold text-blue-400">{state.scenes.length}</span>
+                    </div>
+                </div>
+             </div>
+
+             <StoryTable 
+                scenes={state.scenes} 
+                refImages={state.refImages}
+                onGenerateImage={handleGenerateImage}
+                onGenerateSequence={handleGenerateSequence}
+                onUpdatePrompt={handleUpdatePrompt}
+                onRefinePrompt={handleRefinePrompt}
+                onFormatChange={handleFormatChange}
+                onSaveNarrative={handleSaveNarrative}
+                onAddScene={handleAddScene}
+                onDeleteScene={handleDeleteScene}
+                onUpdateSplitText={handleUpdateSplitText}
+                onGeneratePrompts={handleGeneratePrompts}
+                onGenerateAllImages={handleGenerateAllImages}
+                isGeneratingAll={isGeneratingAll}
+                generateAllProgress={generateAllProgress}
+                onCancelGenerateAll={handleCancelGenerateAll}
+                language={state.language}
+             />
+        </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
-    </Layout>
+      </main>
+    </div>
   );
 };
 

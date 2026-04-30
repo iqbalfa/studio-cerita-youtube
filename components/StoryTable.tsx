@@ -1,28 +1,25 @@
 import React, { useState } from 'react';
-
-// SVG Icons
-const Icons = {
-  plus: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>,
-  image: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
-  trash: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
-  sparkles: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>,
-  refresh: () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
-  x: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>,
-  zoomIn: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>,
-  edit: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
-  settings2: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>,
-  download: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>,
-  maximize: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>,
-  check: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>,
-  clock: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-  lock: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
-  chevronRight: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>,
-  zap: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
-  square: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>,
-  play: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-};
-import { motion, AnimatePresence } from 'framer-motion';
-import { StoryScene, ReferenceImage } from '../types/types';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Edit3, 
+  Trash2, 
+  Plus, 
+  Settings2, 
+  Sparkles, 
+  RefreshCw, 
+  Download, 
+  Maximize2, 
+  X, 
+  CheckCircle2, 
+  Clock, 
+  Lock,
+  ChevronRight,
+  Type,
+  Zap,
+  Square,
+  Play
+} from 'lucide-react';
+import { StoryScene, ReferenceImage } from '../types';
 
 interface StoryTableProps {
   scenes: StoryScene[];
@@ -124,13 +121,13 @@ const FormatEditor: React.FC<{
     const [count, setCount] = useState<number>(2);
 
     return (
-        <div className="absolute left-0 bottom-full mb-2 bg-gray-100 border border-slate-600 rounded-lg shadow-sm p-3 w-64 z-50">
-            <h4 className="text-xs font-semibold text-foreground mb-2">{t.changeFormat}</h4>
+        <div className="absolute left-0 bottom-full mb-2 bg-slate-800 border border-slate-600 rounded-lg shadow-xl p-3 w-64 z-50">
+            <h4 className="text-xs font-semibold text-white mb-2">{t.changeFormat}</h4>
             <div className="flex flex-col gap-2">
                 <select 
                     value={format} 
                     onChange={(e) => setFormat(e.target.value as any)}
-                    className="bg-surface border border-slate-600 text-xs rounded p-1 text-foreground"
+                    className="bg-slate-900 border border-slate-600 text-xs rounded p-1 text-slate-200"
                 >
                     <option value="Single Panel">{t.singlePanel}</option>
                     <option value="Multi Panel">{t.multiPanel}</option>
@@ -139,29 +136,29 @@ const FormatEditor: React.FC<{
 
                 {format !== "Single Panel" && (
                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-muted">{t.count}</span>
+                        <span className="text-[10px] text-slate-400">{t.count}</span>
                         <input 
                             type="number" 
                             min={2} 
                             max={5} 
                             value={count} 
                             onChange={(e) => setCount(parseInt(e.target.value))}
-                            className="w-16 bg-surface border border-slate-600 text-xs rounded p-1 text-foreground"
+                            className="w-16 bg-slate-900 border border-slate-600 text-xs rounded p-1 text-slate-200"
                         />
                      </div>
                 )}
 
                 <div className="flex justify-end gap-2 mt-2">
-                    <button onClick={onClose} className="text-[10px] text-muted hover:text-foreground">{t.cancel}</button>
+                    <button onClick={onClose} className="text-[10px] text-slate-400 hover:text-white">{t.cancel}</button>
                     <button 
                         onClick={() => onApply(format, count)}
-                        className="text-[10px] bg-primary hover:bg-primary-hover text-foreground px-2 py-1 rounded"
+                        className="text-[10px] bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded"
                     >
                         {t.apply}
                     </button>
                 </div>
             </div>
-            <div className="absolute bottom-[-5px] left-4 w-2 h-2 bg-gray-100 border-b border-r border-slate-600 rotate-45"></div>
+            <div className="absolute bottom-[-5px] left-4 w-2 h-2 bg-slate-800 border-b border-r border-slate-600 rotate-45"></div>
         </div>
     );
 };
@@ -271,7 +268,7 @@ const StoryTable: React.FC<StoryTableProps> = ({
   const getFormatBadgeStyle = (label: string) => {
       if (label.toLowerCase().includes("sequence")) return "bg-orange-900/50 text-orange-300 border-orange-800/50";
       if (label.toLowerCase().includes("multi")) return "bg-purple-900/50 text-purple-300 border-purple-800/50";
-      return "bg-gray-100 text-muted border-slate-600";
+      return "bg-slate-800 text-slate-400 border-slate-600";
   };
 
   // Helper to render text with newlines after periods
@@ -292,12 +289,12 @@ const StoryTable: React.FC<StoryTableProps> = ({
                     <img 
                         src={selectedImage} 
                         alt="Enlarged view" 
-                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-md border border-border"
+                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border border-slate-700"
                         onClick={(e) => e.stopPropagation()} 
                     />
                     <button 
                         onClick={() => setSelectedImage(null)}
-                        className="absolute -top-12 right-0 text-foreground hover:text-foreground flex items-center gap-2 bg-gray-100/50 px-3 py-1 rounded-full border border-slate-600"
+                        className="absolute -top-12 right-0 text-white hover:text-slate-300 flex items-center gap-2 bg-slate-800/50 px-3 py-1 rounded-full border border-slate-600"
                     >
                         <span>{t.close}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -309,11 +306,11 @@ const StoryTable: React.FC<StoryTableProps> = ({
         )}
 
         {scenes.length === 0 ? (
-        <div className="text-center py-20 bg-gray-100/50 rounded-xl border border-dashed border-border">
-            <p className="text-muted mb-4">{t.noStoryboard}</p>
+        <div className="text-center py-20 bg-slate-800/50 rounded-xl border border-dashed border-slate-700">
+            <p className="text-slate-400 mb-4">{t.noStoryboard}</p>
             <button 
                 onClick={() => onAddScene()}
-                className="bg-primary/20 hover:bg-primary/30 text-primary text-xs px-3 py-2 rounded border border-blue-500/30 transition-colors"
+                className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs px-3 py-2 rounded border border-blue-500/30 transition-colors"
             >
                 {t.addManual}
             </button>
@@ -325,9 +322,9 @@ const StoryTable: React.FC<StoryTableProps> = ({
                     {isGeneratingAll ? (
                         <button
                             onClick={onCancelGenerateAll}
-                            className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-destructive border border-red-500/50 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
+                            className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/50 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
                         >
-                            <Icons.square />
+                            <Square className="w-4 h-4" />
                             {t.stopGenerateAll} ({generateAllProgress})
                         </button>
                     ) : (
@@ -335,20 +332,20 @@ const StoryTable: React.FC<StoryTableProps> = ({
                             onClick={onGenerateAllImages}
                             className="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/50 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors"
                         >
-                            <Icons.play />
+                            <Play className="w-4 h-4" />
                             {t.generateAll}
                         </button>
                     )}
                 </div>
             )}
-            <div className="overflow-x-auto rounded-xl border border-border bg-surface/50 shadow-md pb-32">
+            <div className="overflow-x-auto rounded-xl border border-slate-700 bg-slate-900/50 shadow-2xl pb-32">
             <table className="w-full text-left text-sm border-collapse table-fixed">
-            <thead className="bg-gray-100 text-foreground uppercase tracking-wider font-semibold text-xs">
+            <thead className="bg-slate-800 text-slate-200 uppercase tracking-wider font-semibold text-xs">
             <tr>
-                <th className="p-4 w-[15%] border-r border-border">{t.col1}</th>
-                <th className="p-4 w-[15%] border-r border-border">{t.col2}</th>
-                <th className="p-4 w-[25%] border-r border-border">{t.col3}</th>
-                <th className="p-4 w-[10%] text-center border-r border-border">{t.col4}</th>
+                <th className="p-4 w-[15%] border-r border-slate-700">{t.col1}</th>
+                <th className="p-4 w-[15%] border-r border-slate-700">{t.col2}</th>
+                <th className="p-4 w-[25%] border-r border-slate-700">{t.col3}</th>
+                <th className="p-4 w-[10%] text-center border-r border-slate-700">{t.col4}</th>
                 <th className="p-4 w-[35%] text-center">{t.col5}</th>
             </tr>
             </thead>
@@ -378,59 +375,59 @@ const StoryTable: React.FC<StoryTableProps> = ({
                         const sceneFormatLabel = getSceneFormatLabel(scene);
 
                         return (
-                            <tr key={frame.id} className="hover:bg-gray-100/30 transition-colors">
+                            <tr key={frame.id} className="hover:bg-slate-800/30 transition-colors">
                                 {/* 1. Text dan Format Column (Spans Row) */}
                                 {isFirstFrame && (
                                     <td 
-                                        className="p-4 align-top text-foreground border-r border-border bg-surface/30 relative"
+                                        className="p-4 align-top text-slate-300 border-r border-slate-700 bg-slate-900/30 relative"
                                         rowSpan={scene.frames.length}
                                     >
                                         <div className="flex flex-col h-full min-h-[150px]">
                                             {editingSceneId === scene.id ? (
                                                 <div className="flex flex-col gap-2 h-full">
                                                     <textarea
-                                                        className="w-full h-32 bg-gray-100 border border-slate-600 rounded p-2 text-sm text-foreground outline-none resize-none"
+                                                        className="w-full h-32 bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white outline-none resize-none"
                                                         value={tempNarrativeText}
                                                         onChange={(e) => setTempNarrativeText(e.target.value)}
                                                     />
                                                     <div className="flex gap-2">
-                                                        <button onClick={() => saveEditing(scene.id)} className="text-[10px] bg-green-600 text-foreground px-2 py-1 rounded">{t.save}</button>
-                                                        <button onClick={cancelEditing} className="text-[10px] bg-slate-700 text-foreground px-2 py-1 rounded">{t.cancel}</button>
+                                                        <button onClick={() => saveEditing(scene.id)} className="text-[10px] bg-green-600 text-white px-2 py-1 rounded">{t.save}</button>
+                                                        <button onClick={cancelEditing} className="text-[10px] bg-slate-700 text-slate-300 px-2 py-1 rounded">{t.cancel}</button>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <>
                                                     {/* Action Buttons Centered */}
-                                                    <div className="flex justify-center gap-2 mb-3 w-full border-b border-border/50 pb-3 relative z-20">
+                                                    <div className="flex justify-center gap-2 mb-3 w-full border-b border-slate-800/50 pb-3 relative z-20">
                                                         <button 
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); startEditing(scene.id, scene.narrativeText); }} 
-                                                            className="p-2 rounded-lg bg-gray-100 hover:bg-primary/20 text-muted hover:text-primary border border-border transition-all shadow-sm"
+                                                            className="p-2 rounded-lg bg-slate-800 hover:bg-blue-600/20 text-slate-400 hover:text-blue-400 border border-slate-700 transition-all shadow-sm"
                                                             title="Edit Teks"
                                                         >
-                                                            <Icons.edit />
+                                                            <Edit3 className="w-4 h-4" />
                                                         </button>
                                                         <button 
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); onDeleteScene(scene.id); }} 
-                                                            className="p-2 rounded-lg bg-gray-100 hover:bg-red-600/20 text-muted hover:text-destructive border border-border transition-all shadow-sm"
+                                                            className="p-2 rounded-lg bg-slate-800 hover:bg-red-600/20 text-slate-400 hover:text-red-400 border border-slate-700 transition-all shadow-sm"
                                                             title="Hapus Baris"
                                                         >
-                                                            <Icons.trash />
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                         <button 
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); onAddScene(sceneIndex); }} 
-                                                            className="p-2 rounded-lg bg-gray-100 hover:bg-emerald-600/20 text-muted hover:text-emerald-400 border border-border transition-all shadow-sm"
+                                                            className="p-2 rounded-lg bg-slate-800 hover:bg-emerald-600/20 text-slate-400 hover:text-emerald-400 border border-slate-700 transition-all shadow-sm"
                                                             title="Tambah Baris Dibawah"
                                                         >
-                                                            <Icons.plus />
+                                                            <Plus className="w-4 h-4" />
                                                         </button>
                                                     </div>
 
                                                     <div className="mb-4 flex flex-col gap-2 flex-grow">
                                                         {/* UNIFIED CONTAINER FOR TEXT SPLITS (One Textbox Logic) */}
-                                                        <div className="bg-gray-50/40 rounded border border-border p-3 shadow-sm min-h-[80px] whitespace-pre-line leading-relaxed font-light text-xs text-foreground">
+                                                        <div className="bg-slate-950/40 rounded border border-slate-700 p-3 shadow-sm min-h-[80px] whitespace-pre-line leading-relaxed font-light text-xs text-slate-300">
                                                             {renderSplitText(scene.narrativeText)}
                                                         </div>
                                                     </div>
@@ -442,14 +439,14 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                         </div>
 
                                                         {scene.isRestructuring ? (
-                                                            <span className="text-xs text-primary animate-pulse block text-center">Regenerating...</span>
+                                                            <span className="text-xs text-blue-400 animate-pulse block text-center">Regenerating...</span>
                                                         ) : (
                                                             <div className="relative">
                                                                 <button 
                                                                     onClick={() => setEditingFormatId(scene.id)}
-                                                                    className="text-[10px] font-bold uppercase tracking-wider bg-gray-100 hover:bg-gray-200 border border-border text-foreground px-3 py-2 rounded-lg flex items-center gap-2 w-full justify-center transition-all shadow-sm"
+                                                                    className="text-[10px] font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-3 py-2 rounded-lg flex items-center gap-2 w-full justify-center transition-all shadow-sm"
                                                                 >
-                                                                    <Icons.settings2 />
+                                                                    <Settings2 className="w-3 h-3" />
                                                                     {t.changeFormat}
                                                                 </button>
                                                                 {editingFormatId === scene.id && (
@@ -473,13 +470,13 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                 )}
 
                                 {/* 2. Split Text Column */}
-                                <td className="p-4 align-top border-r border-border h-full">
+                                <td className="p-4 align-top border-r border-slate-700 h-full">
                                     <div className="flex flex-col h-full">
                                         <div className="flex flex-col gap-2 mb-4 flex-1">
                                             {(frame.splitText || []).map((textSeg, segIdx) => (
                                                 <div key={segIdx} className="relative group flex-1 flex flex-col">
                                                     <textarea
-                                                        className="w-full h-full min-h-[100px] bg-gray-50 border border-border rounded p-2 text-xs text-foreground resize-none focus:border-blue-500 outline-none"
+                                                        className="w-full h-full min-h-[100px] bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-300 resize-none focus:border-blue-500 outline-none"
                                                         value={textSeg}
                                                         onChange={(e) => handleSplitTextChange(scene.id, frame.id, segIdx, e.target.value, frame.splitText)}
                                                     />
@@ -489,24 +486,24 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                         
                                         {/* Render Button in the last frame of the scene */}
                                         {isLastFrame && (
-                                            <div className="mt-auto pt-2 border-t border-border">
+                                            <div className="mt-auto pt-2 border-t border-slate-800">
                                                 <button 
                                                     onClick={() => onGeneratePrompts(scene.id)}
                                                     disabled={scene.isGeneratingPrompts}
                                                     className={`w-full py-3 px-2 text-[10px] font-bold uppercase tracking-widest rounded-lg border transition-all shadow-lg flex items-center justify-center gap-2 ${
                                                         scene.isGeneratingPrompts 
-                                                        ? 'bg-gray-100 border-border text-muted cursor-wait' 
+                                                        ? 'bg-slate-800 border-slate-700 text-slate-500 cursor-wait' 
                                                         : 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300 hover:bg-indigo-600/30 hover:border-indigo-400'
                                                     }`}
                                                 >
                                                     {scene.isGeneratingPrompts ? (
                                                         <>
-                                                            <span className="animate-spin inline-block"><Icons.refresh /></span>
+                                                            <RefreshCw className="w-3 h-3 animate-spin" />
                                                             {t.generating}
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Icons.sparkles />
+                                                            <Sparkles className="w-3 h-3" />
                                                             {t.generatePrompts}
                                                         </>
                                                     )}
@@ -517,13 +514,13 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                 </td>
 
                                 {/* 3. Prompt Column */}
-                                <td className="p-4 align-top border-r border-border">
+                                <td className="p-4 align-top border-r border-slate-700">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center justify-end">
-                                            <span className="text-[10px] text-muted font-mono">#{frameIndex + 1}</span>
+                                            <span className="text-[10px] text-slate-600 font-mono">#{frameIndex + 1}</span>
                                         </div>
                                         <textarea 
-                                            className="w-full h-32 bg-gray-50/50 border border-border rounded p-2 text-[11px] text-foreground font-mono focus:ring-1 focus:ring-primary outline-none resize-y"
+                                            className="w-full h-32 bg-slate-950/50 border border-slate-700 rounded p-2 text-[11px] text-slate-300 font-mono focus:ring-1 focus:ring-blue-500 outline-none resize-y"
                                             value={frame.visualPrompt}
                                             onChange={(e) => onUpdatePrompt(scene.id, frame.id, e.target.value)}
                                             placeholder={language === 'en' ? "English Prompt..." : "Prompt Bahasa Indonesia..."}
@@ -532,7 +529,7 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                             <input 
                                                 type="text"
                                                 placeholder={t.editPrompt}
-                                                className="flex-1 bg-surface border border-slate-600 rounded px-2 py-1 text-[10px] text-foreground"
+                                                className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-[10px] text-slate-200"
                                                 value={instructions[frame.id] || ''}
                                                 onChange={(e) => handleInstructionChange(frame.id, e.target.value)}
                                                 onKeyDown={(e) => handleKeyDownRefine(e, scene.id, frame.id)}
@@ -543,8 +540,8 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                 disabled={frame.isRefining || !instructions[frame.id]}
                                                 className={`text-[10px] px-2 border rounded flex items-center gap-1 ${
                                                     frame.isRefining 
-                                                    ? 'bg-gray-100 text-muted border-border cursor-wait' 
-                                                    : 'bg-slate-700 hover:bg-slate-600 border-slate-500 text-foreground'
+                                                    ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-wait' 
+                                                    : 'bg-slate-700 hover:bg-slate-600 border-slate-500 text-white'
                                                 }`}
                                             >
                                                 {frame.isRefining ? (
@@ -559,7 +556,7 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                 </td>
 
                                 {/* 4. REF Column (Filtered Display) */}
-                                <td className="p-4 align-top border-r border-border bg-surface/20">
+                                <td className="p-4 align-top border-r border-slate-700 bg-slate-900/20">
                                     <div className="flex flex-col items-center gap-2">
                                         {displayedRefs.length > 0 ? (
                                             <div className="flex flex-wrap justify-center gap-2">
@@ -567,7 +564,7 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                     <div key={img.id} className="group relative">
                                                         <img 
                                                             src={img.data} 
-                                                            className="h-8 w-8 rounded-full ring-2 ring-primary/50 object-cover" 
+                                                            className="h-8 w-8 rounded-full ring-2 ring-blue-500/50 object-cover" 
                                                             alt={img.name}
                                                             title={img.name}
                                                         />
@@ -575,11 +572,11 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                 ))}
                                             </div>
                                         ) : (
-                                            <span className="text-[10px] text-muted italic">No Ref</span>
+                                            <span className="text-[10px] text-slate-600 italic">No Ref</span>
                                         )}
                                         {isSequence && (
                                             <div className={`text-[9px] text-center px-1 rounded border mt-1 w-full
-                                                ${canGenerate ? 'text-green-400 bg-green-950/30 border-green-900/50' : 'text-destructive bg-red-950/30 border-red-900/50'}`}>
+                                                ${canGenerate ? 'text-green-400 bg-green-950/30 border-green-900/50' : 'text-red-400 bg-red-950/30 border-red-900/50'}`}>
                                                 {canGenerate ? t.ready : t.locked}
                                             </div>
                                         )}
@@ -589,11 +586,11 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                 {/* 5. Result Column */}
                                 <td className="p-4 align-top">
                                     <div className="flex flex-col gap-2">
-                                        <div className="relative w-full aspect-video bg-gray-50 rounded-lg overflow-hidden border border-border flex items-center justify-center group/image">
+                                        <div className="relative w-full aspect-video bg-slate-950 rounded-lg overflow-hidden border border-slate-700 flex items-center justify-center group/image">
                                             {frame.isGenerating ? (
                                                 <div className="flex flex-col items-center gap-2">
                                                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                                                    <span className="text-[10px] text-primary">Generating...</span>
+                                                    <span className="text-[10px] text-blue-400">Generating...</span>
                                                 </div>
                                             ) : frame.imageUrl ? (
                                                 <>
@@ -606,7 +603,7 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                     <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/10 transition-colors pointer-events-none" />
                                                 </>
                                             ) : (
-                                                <span className="text-[10px] text-muted">
+                                                <span className="text-[10px] text-slate-600">
                                                     {canGenerate ? t.readyToGenerate : `${t.waitFor}${frameIndex}`}
                                                 </span>
                                             )}
@@ -619,14 +616,14 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                 disabled={frame.isGenerating || !canGenerate || scene.isGeneratingSequence}
                                                 className={`flex-1 py-2.5 px-4 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-2
                                                     ${!canGenerate || scene.isGeneratingSequence
-                                                        ? 'bg-gray-100 text-muted cursor-not-allowed opacity-50 border border-border' 
-                                                        : 'bg-primary hover:bg-primary-hover text-foreground border border-white/10'
+                                                        ? 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50 border border-slate-700' 
+                                                        : 'bg-blue-600 hover:bg-blue-500 text-white border border-white/10'
                                                     }`}
                                             >
                                                 {frame.isGenerating ? (
-                                                    <span className="animate-spin inline-block"><Icons.refresh /></span>
+                                                    <RefreshCw className="w-3 h-3 animate-spin" />
                                                 ) : (
-                                                    <Icons.sparkles />
+                                                    <Sparkles className="w-3 h-3" />
                                                 )}
                                                 {frame.imageUrl ? 'Regenerate' : 'Generate'}
                                             </button>
@@ -634,10 +631,10 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                             {frame.imageUrl && (
                                                 <button
                                                     onClick={() => handleDownload(frame.imageUrl!, `scene-${sceneIndex}-frame-${frameIndex}.png`)}
-                                                    className="py-2.5 px-3 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-foreground border border-border transition-all shadow-sm"
+                                                    className="py-2.5 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all shadow-sm"
                                                     title="Download Image"
                                                 >
-                                                    <Icons.download />
+                                                    <Download className="w-4 h-4" />
                                                 </button>
                                             )}
                                         </div>
@@ -654,16 +651,16 @@ const StoryTable: React.FC<StoryTableProps> = ({
                                                     }`}
                                              >
                                                 {scene.isGeneratingSequence ? (
-                                                     <span className="animate-spin inline-block"><Icons.refresh /></span>
+                                                     <RefreshCw className="w-3 h-3 animate-spin" />
                                                  ) : (
-                                                     <Icons.zap />
+                                                     <Zap className="w-3 h-3" />
                                                  )}
                                                  {scene.isGeneratingSequence ? t.generatingSequence : t.generateSequence}
                                              </button>
                                         )}
                                         
                                         {frame.error && (
-                                            <p className="text-destructive text-[9px] text-center bg-red-950/30 p-1 rounded">
+                                            <p className="text-red-400 text-[9px] text-center bg-red-950/30 p-1 rounded">
                                                 {frame.error}
                                             </p>
                                         )}
@@ -683,9 +680,9 @@ const StoryTable: React.FC<StoryTableProps> = ({
         <div className="flex justify-center">
              <button 
                 onClick={() => onAddScene()}
-                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-foreground hover:text-foreground px-4 py-2 rounded-full border border-slate-600 text-sm"
+                className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-full border border-slate-600 text-sm"
             >
-                <Icons.plus />
+                <Plus className="w-4 h-4" />
                 {t.addNewRow}
             </button>
         </div>

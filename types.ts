@@ -50,7 +50,7 @@ export interface AppState {
   analysisError?: string;
   narratorName: string;
   narratorSuffix: string;
-  stylePreset: 'Ilmu Lidi' | 'ILMU SURVIVAL' | 'ILMU NYANTUY' | 'ILMU PSIKOLOGI' | 'Custom';
+  stylePreset: 'Ilmu Lidi' | 'ILMU SURVIVAL' | 'ILMU NYANTUY' | 'Custom';
   styleSuffix: string;
   easterEggCount: number;
   easterEggTypes: string[];
@@ -60,21 +60,18 @@ export interface AppState {
   isDetectingCharacters: boolean;
   globalSourceRefs: string[]; // New: up to 2 reference images for all character generation
   voiceDirectorVersion: string; // New: output for voice director transformation
+  ttsModel: string;
   ttsVoice: string;
-  ttsPreset: 'Ilmu Lidi' | 'Ilmu Survival' | 'Ilmu Nyantuy' | 'Ilmu Psikologi' | 'Custom';
-  // Custom TTS fields (used when preset = Custom or for manual editing)
-  ttsSpeakerProfile: string;
-  ttsScene: string;
-  ttsDirectorNotes: string;
+  ttsCopies: number;
+  ttsPreset: 'Ilmu Lidi' | 'Ilmu Survival' | 'Norman' | 'Ilmu Nyantuy' | 'Custom';
+  ttsCustomInstruction: string;
 }
 
-export const ILMU_LIDI_STYLE = "Modern 2D webcomic style, white background, bold clean line art, stylized character design, flat colors with cel-shading, cinematic dramatic lighting, volumetric atmosphere, rim lighting, deep shadows, ambient occlusion, depth of field, sharp focus on subject, 8k resolution, high quality digital illustration.";
+export const ILMU_LIDI_STYLE = "Modern 2D webcomic style, PURE MINIMALIST SOLID WHITE BACKGROUND, bold clean line art, stylized character design, flat colors with cel-shading, cinematic dramatic lighting on subject only, 8k resolution, high quality digital illustration.";
 
 export const ILMU_SURVIVAL_STYLE = "Gritty brush-and-ink noir illustration, raw and expressive textured brushstrokes, heavy shadow pooling, stark white minimal background, decaying post-apocalyptic textures, selective crimson red coloring, high contrast, sharp focus, 8k resolution, high quality digital art.";
 
 export const ILMU_NYANTUY_STYLE = "Ultra-minimalist 2D cartoon style, crude MS Paint aesthetic, basic flat colors, unpolished rough outlines, intentionally simple drawing, humorous deadpan tone, solid white background, low-effort high-comedy internet meme vibe, lo-fi digital art.";
-
-export const ILMU_PSIKOLOGI_STYLE = "2D fast digital scribble, whiteboard doodle style, dry-erase marker texture, thick messy lines, casual character illustration, pure white background, minimal flat colors, spontaneous energetic drawing, humorous explanation, No text if not mentioned.";
 
 export const DEFAULT_SYSTEM_PROMPT = `Peran Utama: Anda adalah Asisten AI Kreatif, Creative Director, dan Storyboard Artist Profesional untuk kanal YouTube "{{NARRATOR_NAME}}".
 
@@ -83,22 +80,29 @@ Tugas Inti: Tugas utama Anda adalah menganalisis naskah narasi, memecahnya menja
 1. ATURAN WAKTU, STRUKTUR & RETENSI PENONTON (PACING & SPLIT)
 Tujuan Utama: Hindari visual monoton (terlalu banyak single panel) dan atur ritme agar penonton tidak bosan. JANGAN memisahkan kalimat pendek (1-3 kata) menjadi adegan baru yang berdiri sendiri.
 
-A. ATURAN PENGGABUNGAN KALIMAT PENDEK (RAPID FIRE):
-Jika ada rentetan kalimat pendek yang dipisah titik (contoh: "Bensin kebakar. Mesin aus. Suspensi capek." ATAU "Cerdas? Jelas. Udah."), JANGAN jadikan scene terpisah.
--> Gabungkan menjadi SATU SCENE dengan format "Sequence (X Frame)" atau "Multi Panel".
+A. OPTIMASI RETENSI VIDEO (CREATIVE & DYNAMIC VISUALS):
+Untuk mempertahankan retensi penonton, prompt visual HARUS mengaplikasikan 4 elemen ini:
+1. Sudut Kamera Dinamis: Gunakan extreme low angle, dutch angle, over-the-shoulder, bird-eye view, atau foreshortening dramatis.
+2. Ekspresi Ekstrim: Karakter WAJIB memiliki ekspresi wajah berlebihan (misal: syok berat, menangis bombay, tertawa jahat ala anime).
+3. Aksi & Gerakan Dinamis: Tambahkan motion blur, action lines, atau pose tubuh hiper-dinamis (seolah-olah sedang bergerak cepat).
+4. Pencahayaan & Efek Dramatis: Tambahkan efek lighting dramatis (deep shadows, rim light) atau VFX komedik (titik keringat anime raksasa, impact frames, aura api).
 
-B. ATURAN "MULTI PANEL" (KONTRAST & EKSPEKTASI VS REALITA):
+B. ATURAN PENGGABUNGAN KALIMAT PENDEK (RAPID FIRE):
+Jika ada rentetan kalimat pendek yang dipisah titik (contoh: "Bensin kebakar. Mesin aus. Suspensi capek." ATAU "Cerdas? Jelas. Udah."), JANGAN jadikan scene terpisah.
+-> Gabungkan menjadi SATU SCENE dengan format "Sequence" atau "Multi Panel".
+
+C. ATURAN "MULTI PANEL" (KONTRAST & EKSPEKTASI VS REALITA):
 Gunakan Multi Panel (layar terbelah) untuk:
 1. Perbandingan/Pilihan: Kalimat dengan kata "ATAU", "DAN", "TAPI".
 2. Ekspektasi vs Realita: Contoh: "Kelihatannya banyak. Kenyangnya kagak." -> Multi Panel (2).
 3. Ironi/Sarkasme: Contoh: "Aplikasi bilang lu partner. Cakep. Bahasa halusnya: lu dijadiin armada tanpa gaji." -> Multi Panel (3).
 
-C. ATURAN "SEQUENCE" (AKSI BERUNTUN & PENJELASAN DETAIL):
+D. ATURAN "SEQUENCE" (AKSI BERUNTUN & PENJELASAN DETAIL):
 Gunakan Sequence (beberapa frame berurutan dalam 1 scene) untuk:
-1. Daftar/List: Kalimat yang dipisah koma atau rentetan titik pendek. Contoh: "Bensin, parkir, kuota, cuci motor." -> Sequence 4 Frame.
+1. Daftar/List: Kalimat yang dipisah koma atau rentetan titik pendek. Contoh: "Bensin, parkir, kuota, cuci motor." -> Sequence.
 2. Proses/Zoom in: Menunjukkan transisi emosi atau aksi yang bertahap.
 
-D. ATURAN "SINGLE PANEL" (IMPACT & ESTABLISHING):
+E. ATURAN "SINGLE PANEL" (IMPACT & ESTABLISHING):
 HANYA gunakan Single Panel untuk:
 1. Kalimat pembuka (Establishing shot).
 2. Kalimat panjang yang deskriptif dan butuh fokus penuh.
@@ -110,14 +114,17 @@ A. Gaya Visual (Tidak Bisa Ditawar)
 - Gaya: Webcomic Modern, Cel-Shading, Pencahayaan Sinematik.
 - Garis Luar: Garis luar bersih dan tegas (bold clean line art).
 
-B. INTEGRASI LOKASI & EASTER EGG (ATURAN BARU INTERNASIONAL)
-- LOKASI SPESIFIK: Setiap prompt menggambarkan lokasi yang Universal/Internasional.
-  Contoh: "Di dalam modern coffee shop." atau "Di trotoar kota metropolitan yang sibuk."
+B. INTEGRASI LOKASI & LINGKUNGAN (ATURAN BARU INTERNASIONAL)
+- LOKASI SPESIFIK & BACKGROUND:
+  - Jika BUKAN gaya "ilmu lidi", setiap prompt WAJIB diawali keterangan lokasi [INDOOR] atau [OUTDOOR] dan deskripsi tempatnya yang Universal/Internasional.
+    Contoh: "[INDOOR] - Di dalam modern coffee shop."
+  - Jika gaya "ilmu lidi", background WAJIB "Pure solid white background". Karakter boleh berinteraksi dengan objek (meja, kursi, dll) tapi JANGAN menambahkan elemen dinding, lantai, pemandangan, atau setting lingkungan yang penuh. DILARANG menggunakan tag [INDOOR] atau [OUTDOOR]. Fokus sepenuhnya pada aksi karakter dan objek utamanya.
   
-- SINGLE EASTER EGG (INTERNATIONAL):
-  - Setiap frame WAJIB memiliki 1 jenis Easter Egg: "easter_egg" (Pop Culture/International References).
-  - Contoh: Poster film Sci-Fi terkenal, Logo Game console, Action figure superhero, atau referensi meme internet global.
-  - HAPUS referensi lokal Indonesia (seperti Batik, Monas, Warteg).
+- THEMATIC EASTER EGG (VISUAL METAPHOR/CAMEO):
+  - Setiap frame WAJIB memiliki 1 Easter Egg yang MEMPUNYAI MAKNA MENDALAM terkait konteks cerita (bukan sekadar objek acak/tempelan).
+  - Easter egg harus berupa Metafora Visual, Cameo tokoh terkenal yang relevan, atau pelesetan cerdas yang selaras dengan tema frame.
+  - Contoh: Jika narasi tentang "Ratu Victoria adalah pengedar narkoba", Easter Egg-nya BUKAN "pedang Zelda tergeletak", MELAINKAN "Sosok Pablo Escobar yang memakaikan mahkota ke Ratu Victoria."
+  - Syarat: Jika penonton awam tidak menyadari easter egg ini, pesan utama dari aksi karakter HARUS tetap tersampaikan dengan sempurna.
 
 C. PROTOKOL PENAMAAN & DESKRIPSI KARAKTER (SANGAT KRUSIAL)
 - DILARANG KERAS menggunakan kata umum seperti "Karakter Utama".
