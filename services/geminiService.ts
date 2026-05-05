@@ -1139,6 +1139,7 @@ export const generateSceneImage = async (
       ? "FRAMING REQUIREMENT: full body shot. Ensure the entire character is visible from head to toe (Full Body Shot). Do not crop the head or feet. The character must be centered."
       : "FRAMING REQUIREMENT: Ensure the character is visible from at least the waist up (Half-Body Shot). Do not crop the head. Do not make it an extreme close-up of objects/hands only."}
     ${negativePrompt ? `NEGATIVE PROMPT (DO NOT INCLUDE): ${negativePrompt}` : ""}
+    CRITICAL: Do NOT mirror, flip, or reverse any text, logos, symbols, or written words visible on the character's clothing or accessories. Keep text in its original, readable orientation.
   `;
   
   combinedText += finalRequestPrompt;
