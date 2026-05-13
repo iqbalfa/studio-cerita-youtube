@@ -91,6 +91,168 @@ const distributeText = (text: string, count: number): string[] => {
     return distributeItems(words, count, " ");
 };
 
+// Split text into chunks of 10-20 words, combining sentences when possible.
+// Used for "2. Pembagian Kata" column — each row = one chunk of ~10-20 words.
+const splitTextByWordCount = (text: string, minWords: number = 10, maxWords: number = 20): string[] => {
+    const cleanText = text.trim();
+    if (!cleanText) return [];
+
+    // Step 1: split into sentences
+    const sentenceRegex = /[^.!?\n]+[.!?]+|[^.!?\n]+$/g;
+    const sentences = cleanText.match(sentenceRegex)?.map(s => s.trim()).filter(s => s) || [cleanText];
+
+    const chunks: string[] = [];
+    let currentChunk = "";
+    let currentWordCount = 0;
+
+    for (const sentence of sentences) {
+        const sentenceWords = sentence.split(/\s+/).length;
+
+        // If this single sentence exceeds maxWords, split it by words
+        if (sentenceWords > maxWords) {
+            // Flush current chunk first
+            if (currentChunk.length > 0) {
+                chunks.push(currentChunk.trim());
+                currentChunk = "";
+                currentWordCount = 0;
+            }
+
+            const words = sentence.split(/\s+/);
+            let i = 0;
+            while (i < words.length) {
+                if (i < words.length - maxWords) {
+                    // Take exactly maxWords
+                    chunks.push(words.slice(i, i + maxWords).join(" "));
+                    i += maxWords;
+                } else {
+                    // Remaining words (less than maxWords)
+                    chunks.push(words.slice(i).join(" "));
+                    break;
+                }
+            }
+            continue;
+        }
+
+        // If adding this sentence keeps us within maxWords, add it
+        if (currentWordCount + sentenceWords <= maxWords) {
+            currentChunk = currentChunk ? currentChunk + " " + sentence : sentence;
+            currentWordCount += sentenceWords;
+        } else {
+            // Flush current chunk if it has enough words, otherwise merge anyway
+            if (currentWordCount >= minWords || currentWordCount > 0) {
+                chunks.push(currentChunk.trim());
+            }
+            currentChunk = sentence;
+            currentWordCount = sentenceWords;
+        }
+    }
+
+    // Flush remaining
+    if (currentChunk.trim()) {
+        chunks.push(currentChunk.trim());
+    }
+
+    return chunks.length > 0 ? chunks : [cleanText];
+};
+
+// Re-split each scene's splitText using local word-count-based logic (10-20 words).
+// Also merges consecutive short scenes so each row has ~10-20 words.
+const postProcessScenes = (scenes: StoryScene[]): StoryScene[] => {
+    if (scenes.length === 0) return scenes;
+
+    const MIN_WORDS = 10;
+    const MAX_WORDS = 20;
+    const mergedScenes: StoryScene[] = [];
+
+    for (let i = 0; i < scenes.length; i++) {
+        const current = scenes[i];
+        let mergedNarrative = current.narrativeText;
+        const scenesToMerge: StoryScene[] = [current];
+        let j = i + 1;
+
+        while (j < scenes.length) {
+            const nextWc = scenes[j].narrativeText.split(/\s+/).length;
+            const currentWc = mergedNarrative.split(/\s+/).length;
+
+            if (currentWc >= MIN_WORDS) break;
+            if (currentWc + nextWc > MAX_WORDS) {
+                // If still below MIN, try adding one more short scene to reach minimum
+                if (nextWc <= MAX_WORDS - currentWc) {
+                    mergedNarrative += " " + scenes[j].narrativeText;
+                    scenesToMerge.push(scenes[j]);
+                    j++;
+                }
+                break;
+            }
+            mergedNarrative += " " + scenes[j].narrativeText;
+            scenesToMerge.push(scenes[j]);
+            j++;
+        }
+
+        if (scenesToMerge.length === 1) {
+            // Single scene: keep as is, will be re-split below
+            mergedScenes.push(current);
+        } else {
+            // Multiple short scenes merged into one — reduce to a single frame
+            // (they are now one visual unit)
+            const firstFrame = scenesToMerge[0].frames[0];
+            mergedScenes.push({
+                ...scenesToMerge[0],
+                narrativeText: mergedNarrative.trim(),
+                frames: firstFrame ? [{
+                    ...firstFrame,
+                    format: "Single Panel"
+                }] : [{
+                    id: `frame-${Date.now()}-${mergedScenes.length}`,
+                    format: "Single Panel",
+                    visualPrompt: "",
+                    splitText: [],
+                    isGenerating: false
+                }]
+            });
+        }
+        i = j - 1;
+    }
+
+    // Re-split each scene's splitText using word-count logic
+    return mergedScenes.map(scene => {
+        const chunks = splitTextByWordCount(scene.narrativeText);
+        const finalChunks = chunks.length > 0 ? chunks : [scene.narrativeText];
+        const frameCount = scene.frames.length;
+        const allWords = scene.narrativeText.split(/\s+/);
+
+        if (frameCount <= 1) {
+            // Single-frame: all chunks in one frame
+            return {
+                ...scene,
+                frames: scene.frames.map(f => ({ ...f, splitText: finalChunks }))
+            };
+        }
+
+        // Multi-frame (Sequence/Multi Panel): distribute words evenly across frames
+        const wordsPerFrame = Math.floor(allWords.length / frameCount);
+        const remainder = allWords.length % frameCount;
+        
+        const distributedChunks: string[] = [];
+        let wordIndex = 0;
+        
+        for (let i = 0; i < frameCount; i++) {
+            const count = wordsPerFrame + (i < remainder ? 1 : 0);
+            if (count > 0 && wordIndex < allWords.length) {
+                distributedChunks.push(allWords.slice(wordIndex, wordIndex + count).join(" "));
+                wordIndex += count;
+            } else {
+                distributedChunks.push("");
+            }
+        }
+
+        return {
+            ...scene,
+            frames: scene.frames.map((f, idx) => ({ ...f, splitText: [distributedChunks[idx] || ""] }))
+        };
+    });
+};
+
 const TRANSLATIONS: Record<'id' | 'en', any> = {
   id: {
     configTitle: "Konfigurasi Produksi",
@@ -649,7 +811,10 @@ const App: React.FC = () => {
         state.language,
         state.geminiApiKey
       );
-      setState(prev => ({ ...prev, scenes, isAnalyzing: false }));
+
+      const resplitScenes = postProcessScenes(scenes);
+
+      setState(prev => ({ ...prev, scenes: resplitScenes, isAnalyzing: false }));
     } catch (error: any) {
       setState(prev => ({ 
         ...prev, 
@@ -665,33 +830,25 @@ const App: React.FC = () => {
         scenes: prev.scenes.map(scene => {
             if (scene.id !== sceneId) return scene;
 
-            let partsCount = 1;
-            if (scene.frames.length > 1) {
-                partsCount = scene.frames.length;
-            } else {
-                const fmt = scene.frames[0].format;
-                if (fmt.includes("Multi") || fmt.includes("Sequence")) {
-                    const match = fmt.match(/\((\d+)\)/);
-                    partsCount = match ? parseInt(match[1]) : 2;
-                    // Fallback if regex fails but keyword exists
-                    if (!match) partsCount = 2;
-                }
+            const newSplitTexts = splitTextByWordCount(newText);
+
+            // Single-frame scene: all chunks go into the single frame
+            if (scene.frames.length === 1) {
+                return { 
+                    ...scene, 
+                    narrativeText: newText, 
+                    frames: scene.frames.map((frame) => ({ ...frame, splitText: newSplitTexts }))
+                };
             }
 
-            const newSplitTexts = distributeText(newText, partsCount);
-
-            const updatedFrames = scene.frames.map((frame, idx) => {
-                if (scene.frames.length > 1) {
-                    return { ...frame, splitText: [newSplitTexts[idx]] };
-                } else {
-                    return { ...frame, splitText: newSplitTexts };
-                }
-            });
-
+            // Multi-frame scene: each frame gets its own chunk
             return { 
                 ...scene, 
                 narrativeText: newText, 
-                frames: updatedFrames 
+                frames: scene.frames.map((frame, idx) => ({ 
+                    ...frame, 
+                    splitText: [newSplitTexts[idx] || ""] 
+                }))
             };
         })
     }));
@@ -705,7 +862,7 @@ const App: React.FC = () => {
             id: `frame-${Date.now()}`,
             format: "Single Panel",
             visualPrompt: "", 
-            splitText: [t.newSceneText],
+            splitText: splitTextByWordCount(t.newSceneText),
             isGenerating: false
         }],
         isRestructuring: false
@@ -738,7 +895,7 @@ const App: React.FC = () => {
             if (scene.id !== sceneId) return scene;
 
             const targetPartsCount = format === 'Single Panel' ? 1 : count;
-            const textParts = distributeText(scene.narrativeText, targetPartsCount);
+            const textParts = splitTextByWordCount(scene.narrativeText);
 
             if (format === 'Sequence') {
                 const targetCount = count;
@@ -747,7 +904,7 @@ const App: React.FC = () => {
 
                 for (let i = 0; i < targetCount; i++) {
                     const formatLabel = `Sequence ${i + 1}/${targetCount}`;
-                    const splitTextForFrame = [textParts[i]];
+                    const splitTextForFrame = [textParts[i] || ""];
                     const initialPrompt = i === 0 ? "" : "Referensi dari Gambar sebelumnya, tapi... ";
 
                     if (i < existingFrames.length) {
@@ -1174,6 +1331,10 @@ const App: React.FC = () => {
                 throw new Error("Invalid project file format");
             }
 
+            // Re-split each scene's splitText using local word-count-based logic (10-20 words)
+            const loadedScenes: StoryScene[] = parsed.state.scenes || [];
+            const resplitScenes = postProcessScenes(loadedScenes);
+
             // Restore state
             setState(prev => ({
                 ...prev,
@@ -1181,7 +1342,7 @@ const App: React.FC = () => {
                 targetParagraph: parsed.state.targetParagraph || "",
                 customPrompt: parsed.state.customPrompt || DEFAULT_SYSTEM_PROMPT,
                 refImages: parsed.state.refImages || [],
-                scenes: parsed.state.scenes || [],
+                scenes: resplitScenes,
                 isAnalyzing: false,
                 analysisError: undefined,
                 narratorName: parsed.state.narratorName || 'Norman',
