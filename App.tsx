@@ -91,9 +91,9 @@ const distributeText = (text: string, count: number): string[] => {
     return distributeItems(words, count, " ");
 };
 
-// Split text into chunks of 10-20 words, combining sentences when possible.
-// Used for "2. Pembagian Kata" column — each row = one chunk of ~10-20 words.
-const splitTextByWordCount = (text: string, minWords: number = 10, maxWords: number = 20): string[] => {
+// Split text into chunks of 2-20 words, combining sentences when possible.
+// Used for "2. Pembagian Kata" column — each row = one chunk of ~2-20 words.
+const splitTextByWordCount = (text: string, minWords: number = 2, maxWords: number = 20): string[] => {
     const cleanText = text.trim();
     if (!cleanText) return [];
 
@@ -155,12 +155,12 @@ const splitTextByWordCount = (text: string, minWords: number = 10, maxWords: num
     return chunks.length > 0 ? chunks : [cleanText];
 };
 
-// Re-split each scene's splitText using local word-count-based logic (10-20 words).
-// Also merges consecutive short scenes so each row has ~10-20 words.
+// Re-split each scene's splitText using local word-count-based logic (2-20 words).
+// Also merges consecutive short scenes so each row has ~2-20 words.
 const postProcessScenes = (scenes: StoryScene[]): StoryScene[] => {
     if (scenes.length === 0) return scenes;
 
-    const MIN_WORDS = 10;
+    const MIN_WORDS = 2;
     const MAX_WORDS = 20;
     const mergedScenes: StoryScene[] = [];
 
