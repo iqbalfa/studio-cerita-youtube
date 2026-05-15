@@ -4,7 +4,7 @@ async function test() {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+            model: 'gemini-3.1-flash-image-preview',
             contents: {
                 parts: [
                     { text: "A simple test image of a cat." }
